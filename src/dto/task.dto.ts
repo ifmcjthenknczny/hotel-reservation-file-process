@@ -1,5 +1,4 @@
 import {
-  IsArray,
   IsDate,
   IsEnum,
   IsNotEmpty,
@@ -25,8 +24,8 @@ export class TaskDto {
   @Type(() => Date)
   createdAt: Date;
 
+  @IsDate()
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  errorReport?: string[];
+  @Type(() => Date)
+  updatedAt: Date;
 }

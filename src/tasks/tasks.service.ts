@@ -5,13 +5,16 @@ import { Queue } from 'bullmq';
 import { Task } from './schemas/task.schema';
 import uuid from 'uuid';
 import { TaskStatus } from 'src/model/task.model.js';
-import fs from 'fs'
+import fs from 'fs';
+import path from 'path';
+import { InjectQueue } from '@nestjs/bullmq';
+import { QUEUE_NAME } from 'src/client/redis';
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectModel('Task') private readonly taskModel: Model<Task>,
-    private readonly taskQueue: Queue,
+    @InjectQueue(QUEUE_NAME) private readonly taskQueue: Queue,
   ) {}
   async createTask(file: Express.Multer.File) {
     const taskId: string = uuid.v4();
@@ -19,10 +22,10 @@ export class TasksService {
     const filePath = path.join(targetDir, `${taskId}.xlsx`);
 
     if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-      }
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
 
-      await fs.promises.rename(file, filePath);
+    fs.writeFileSync(filePath, file.buffer);
 
     const task = new this.taskModel({
       taskId,
@@ -32,7 +35,7 @@ export class TasksService {
     });
 
     await task.save();
-    await this.taskQueue.add('process-task', { taskId, filePath });
+    await this.taskQueue.add(QUEUE_NAME, { taskId, filePath });
 
     return task;
   }

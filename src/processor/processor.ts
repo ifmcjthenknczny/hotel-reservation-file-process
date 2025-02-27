@@ -1,7 +1,7 @@
 import xlsx from 'xlsx';
 import fs from 'fs';
-import { ReservationSchema } from '../model/reservation.model';
-import { ReservationDto } from './dto/reservation.dto';
+import { ReservationModel } from '../model/reservation.model';
+import { ReservationDto } from '../dto/reservation.dto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
@@ -21,19 +21,23 @@ export const processFile = async (filePath: string) => {
 
     if (validationErrors.length > 0) {
       errors.push(
-        `⛔ Validation error for: ${JSON.stringify(row)} - ${validationErrors.map((err) => err.constraints)}`,
+        `⛔ Validation error for: ${JSON.stringify(row)} - ${validationErrors
+          .map((err) =>
+            err.constraints
+              ? Object.values(err.constraints).join(', ')
+              : 'Unknown error',
+          )
+          .join('; ')}`,
       );
+
       continue;
     }
 
-    const existingReservation = await ReservationSchema.findOne({
-      bookingId: reservation.bookingId,
+    const existingReservation = await ReservationModel.findOne({
+      reservationId: reservation.reservationId,
     });
 
-    if (
-      reservation.status === 'canceled' ||
-      reservation.status === 'completed'
-    ) {
+    if (['CANCELLED', 'COMPLETED'].includes(reservation.status)) {
       if (existingReservation) {
         existingReservation.status = reservation.status;
         await existingReservation.save();
@@ -42,12 +46,17 @@ export const processFile = async (filePath: string) => {
     }
 
     if (existingReservation) {
-      existingReservation.customerName = reservation.customerName;
-      existingReservation.date = reservation.date;
+      existingReservation.checkInDate = reservation.checkInDate
+        .toISOString()
+        .split('T')[0];
+      existingReservation.checkOutDate = reservation.checkOutDate
+        .toISOString()
+        .split('T')[0];
+      existingReservation.guestName = reservation.guestName;
       existingReservation.status = reservation.status;
       await existingReservation.save();
     } else {
-      await ReservationSchema.create(reservation);
+      await ReservationModel.create(reservation);
     }
   }
 

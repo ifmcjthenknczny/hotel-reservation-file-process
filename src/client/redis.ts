@@ -3,10 +3,12 @@ import { Queue, Worker } from 'bullmq';
 
 const redisConnection = { host: 'localhost', port: 6379 };
 
-const queue = new Queue('file-processing', { connection: redisConnection });
+export const QUEUE_NAME = 'task_queue';
+
+const queue = new Queue(QUEUE_NAME, { connection: redisConnection });
 
 const worker = new Worker(
-  'file-processing',
+  QUEUE_NAME,
   async (job) => {
     await processFile(job.data.filePath);
   },
