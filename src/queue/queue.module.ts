@@ -1,5 +1,4 @@
-import { QueueProcessor } from './queue.processor';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { QueueService } from './queue.service';
 import { BullModule } from '@nestjs/bullmq';
 import { ReservationModule } from 'src/reservation/reservation.module';
@@ -20,9 +19,9 @@ import { TasksModule } from 'src/tasks/tasks.module';
       inject: [ConfigService],
     }),
     ReservationModule,
-    TasksModule,
+    forwardRef(() => TasksModule),
   ],
-  providers: [QueueService, QueueProcessor, QueueWorker],
-  exports: [QueueService, QueueWorker, QueueProcessor],
+  providers: [QueueService, QueueWorker],
+  exports: [QueueService],
 })
 export class QueueModule {}

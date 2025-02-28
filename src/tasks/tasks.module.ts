@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -21,7 +21,8 @@ import { QueueModule } from 'src/queue/queue.module';
     //   }),
     //   inject: [ConfigService],
     // }),
-    QueueModule,
+    forwardRef(() => QueueModule),
   ],
+  exports: [TasksService],
 })
 export class TasksModule {}
