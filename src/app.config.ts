@@ -1,4 +1,4 @@
-import { IsString, IsNumber, validateSync, IsOptional } from 'class-validator';
+import { IsString, validateSync } from 'class-validator';
 import { plainToClass } from 'class-transformer';
 
 export class AppConfig {
@@ -9,12 +9,7 @@ export class AppConfig {
   DATABASE_NAME: string;
 
   @IsString()
-  @IsOptional()
-  REDIS_HOST: string = 'localhost';
-
-  @IsNumber()
-  @IsOptional()
-  REDIS_PORT: number = 6379;
+  REDIS_URI: string;
 }
 
 export function validateConfig(config: Record<string, unknown>) {

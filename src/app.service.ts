@@ -8,4 +8,12 @@ export class AppService {
   getMongoUri(): string {
     return this.configService.get<string>('MONGO_URI')!;
   }
+
+  getRedisUri(): string {
+    return this.configService.get<string>('REDIS_URI')!;
+  }
+
+  ping(): string {
+    return '\npong';
+  }
 }

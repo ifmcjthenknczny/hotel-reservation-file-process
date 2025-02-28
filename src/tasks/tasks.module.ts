@@ -17,8 +17,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       name: QUEUE_NAME,
       useFactory: (configService: ConfigService) => ({
         connection: {
-          host: configService.get<string>('REDIS_HOST', 'localhost'),
-          port: configService.get<number>('REDIS_PORT', 6379),
+          url: configService.get<string>('REDIS_URI'),
         },
       }),
       inject: [ConfigService],
