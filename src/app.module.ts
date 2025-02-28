@@ -5,10 +5,13 @@ import { Task, TaskSchema } from './tasks/tasks.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { QueueModule } from './queue/queue.module';
+import { ReservationModule } from './reservation/reservation.module';
+import { validateConfig } from './app.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, validate: validateConfig }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -17,7 +20,9 @@ import { AppService } from './app.service';
       inject: [ConfigService],
     }),
     MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
-    TasksModule, // Import TasksModule
+    TasksModule,
+    QueueModule,
+    ReservationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

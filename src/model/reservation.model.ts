@@ -2,9 +2,9 @@ import { model, Schema } from 'mongoose';
 
 const RESERVATION_STATUSES = ['CANCELLED', 'PENDING', 'COMPLETED'] as const;
 type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
-type Day = `${number}-${number}-${number}`;
+export type Day = `${number}-${number}-${number}`;
 
-type Reservation = {
+export type Reservation = {
   reservationId: string;
   guestName: string;
   status: ReservationStatus;
@@ -38,9 +38,15 @@ export const ReservationSchema = new Schema({
   },
 });
 
-type PolishReservationStatus = 'oczekująca' | 'anulowana' | 'zrealizowana';
+export type PolishReservationStatus =
+  | 'oczekująca'
+  | 'anulowana'
+  | 'zrealizowana';
 
-const englishStatusMap: Record<PolishReservationStatus, ReservationStatus> = {
+export const englishStatusMap: Record<
+  PolishReservationStatus,
+  ReservationStatus
+> = {
   oczekująca: 'PENDING',
   anulowana: 'CANCELLED',
   zrealizowana: 'COMPLETED',
@@ -49,7 +55,8 @@ const englishStatusMap: Record<PolishReservationStatus, ReservationStatus> = {
 type ReservationFileRow = {
   reservation_id: string;
   guest_name: string;
-  status: PolishReservationStatus;
+  // status: PolishReservationStatus;
+  status: ReservationStatus;
   check_in_date: Day;
   check_out_date: Day;
 };

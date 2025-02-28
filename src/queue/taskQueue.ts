@@ -3,9 +3,7 @@
 
 // const redisConnection = { host: 'localhost', port: 6379 };
 
-export const QUEUE_NAME = 'task_queue';
-
-// const queue = new Queue(QUEUE_NAME, { connection: redisConnection });
+// export const QUEUE_NAME = 'task_queue';
 
 // const worker = new Worker(
 //   QUEUE_NAME,

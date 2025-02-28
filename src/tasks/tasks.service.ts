@@ -1,35 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Queue } from 'bullmq';
 import { Task } from './tasks.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { TaskStatus } from 'src/model/task.model.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { InjectQueue } from '@nestjs/bullmq';
-import { QUEUE_NAME } from 'src/client/redis';
+import { QueueService } from 'src/queue/queue.service';
 
-const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
-const PENDING_DIRECTORY = '/pending';
-// const PROCESSED_DIRECTORY = '/processed';
+export const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
+export const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
 
 @Injectable()
 export class TasksService {
   constructor(
     @InjectModel('Task') private readonly taskModel: Model<Task>,
-    @InjectQueue(QUEUE_NAME) private readonly taskQueue: Queue,
+    private readonly queueService: QueueService,
   ) {}
   async createTask(file: Express.Multer.File) {
     const taskId: string = uuidv4();
-    const targetDir = path.join(
-      process.cwd(),
-      `${RESERVATIONS_DATA_DIRECTORY}${PENDING_DIRECTORY}`,
-    );
+    const targetDir = path.join(process.cwd(), RESERVATIONS_DATA_DIRECTORY);
     const filePath = path.join(targetDir, `${taskId}.xlsx`);
 
     if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
+      await fs.promises.mkdir(targetDir, { recursive: true });
     }
 
     await fs.promises.writeFile(filePath, file.buffer);
@@ -42,8 +36,7 @@ export class TasksService {
     });
 
     await task.save();
-    await this.taskQueue.add(QUEUE_NAME, { taskId, filePath });
-    console.log(task);
+    await this.queueService.processReservationFile(filePath, taskId);
 
     return task;
   }
@@ -59,5 +52,22 @@ export class TasksService {
   async updateTaskStatus(taskId: string, newStatus: TaskStatus) {
     await this.taskModel.updateOne({ taskId }, { status: newStatus });
     return taskId;
+  }
+
+  async saveValidationReport(taskId: string, validationErrors: string[]) {
+    try {
+      const reportsDir = path.join(process.cwd(), RESERVATIONS_DATA_DIRECTORY);
+      const filePath = path.join(reportsDir, `${taskId}.txt`);
+
+      if (!fs.existsSync(reportsDir)) {
+        await fs.promises.mkdir(reportsDir, { recursive: true });
+      }
+
+      const content = validationErrors.join('\n');
+      await fs.promises.writeFile(filePath, content, 'utf-8');
+      console.log(`📄 Raport zapisany: ${filePath}`);
+    } catch (error: any) {
+      console.error(`❌ Błąd zapisu raportu dla ${taskId}:`, error);
+    }
   }
 }
