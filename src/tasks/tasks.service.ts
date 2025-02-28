@@ -2,13 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Queue } from 'bullmq';
-import { Task } from './schemas/task.schema';
-import uuid from 'uuid';
+import { Task } from './tasks.schema';
+import { v4 as uuidv4 } from 'uuid';
 import { TaskStatus } from 'src/model/task.model.js';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectQueue } from '@nestjs/bullmq';
 import { QUEUE_NAME } from 'src/client/redis';
+
+const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
+const PENDING_DIRECTORY = '/pending';
+// const PROCESSED_DIRECTORY = '/processed';
 
 @Injectable()
 export class TasksService {
@@ -17,15 +21,18 @@ export class TasksService {
     @InjectQueue(QUEUE_NAME) private readonly taskQueue: Queue,
   ) {}
   async createTask(file: Express.Multer.File) {
-    const taskId: string = uuid.v4();
-    const targetDir = path.resolve(__dirname, '../../data/reservations');
+    const taskId: string = uuidv4();
+    const targetDir = path.join(
+      process.cwd(),
+      `${RESERVATIONS_DATA_DIRECTORY}${PENDING_DIRECTORY}`,
+    );
     const filePath = path.join(targetDir, `${taskId}.xlsx`);
 
     if (!fs.existsSync(targetDir)) {
       fs.mkdirSync(targetDir, { recursive: true });
     }
 
-    fs.writeFileSync(filePath, file.buffer);
+    await fs.promises.writeFile(filePath, file.buffer);
 
     const task = new this.taskModel({
       taskId,
@@ -36,6 +43,7 @@ export class TasksService {
 
     await task.save();
     await this.taskQueue.add(QUEUE_NAME, { taskId, filePath });
+    console.log(task);
 
     return task;
   }

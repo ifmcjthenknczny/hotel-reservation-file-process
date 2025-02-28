@@ -13,7 +13,7 @@ export class Task {
   filePath: string;
 
   @Prop({
-    required: true,
+    required: false,
     enum: TASK_STATUSES,
     default: 'PENDING',
   })
@@ -21,9 +21,6 @@ export class Task {
 
   @Prop({ required: true })
   createdAt: Date;
-
-  @Prop({ requiered: false })
-  errorReport: string[];
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

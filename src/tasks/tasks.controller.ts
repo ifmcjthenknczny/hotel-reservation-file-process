@@ -1,13 +1,20 @@
 import {
   Controller,
   Get,
+  Header,
+  NotFoundException,
   Post,
   Param,
+  StreamableFile,
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TasksService } from './tasks.service';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const REPORTS_DIRECTORY = 'data/reports';
 
 @Controller('tasks')
 export class TasksController {
@@ -25,13 +32,26 @@ export class TasksController {
     const task = await this.tasksService.getTask(taskId);
     return {
       status: task.status,
-      ...(task.errorReport && { errorReport: task.errorReport }),
     };
   }
 
   @Get('report/:taskId')
+  @Header('Content-Type', 'text/plain')
+  @Header('Content-Disposition', 'attachment; filename="report.txt"')
   async getTaskReport(@Param('taskId') taskId: string) {
-    const { errorReport } = await this.tasksService.getTask(taskId);
-    return { errorReport };
+    const reportPath = path.join(
+      process.cwd(),
+      REPORTS_DIRECTORY,
+      `${taskId}.txt`,
+    );
+
+    try {
+      await fs.promises.access(reportPath);
+    } catch {
+      throw new NotFoundException(`Report for Task ID ${taskId} not found.`);
+    }
+
+    const fileStream = fs.createReadStream(reportPath);
+    return new StreamableFile(fileStream);
   }
 }
