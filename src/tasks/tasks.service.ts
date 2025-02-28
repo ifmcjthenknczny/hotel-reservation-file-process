@@ -56,7 +56,7 @@ export class TasksService {
 
   async saveValidationReport(taskId: string, validationErrors: string[]) {
     try {
-      const reportsDir = path.join(process.cwd(), RESERVATIONS_DATA_DIRECTORY);
+      const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
       const filePath = path.join(reportsDir, `${taskId}.txt`);
 
       if (!fs.existsSync(reportsDir)) {

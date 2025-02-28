@@ -1,23 +1,43 @@
-import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  registerDecorator,
+  ValidationArguments,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 import { Day } from 'src/model/reservation.model';
 import { englishStatusMap } from 'src/model/reservation.model';
 
 export enum ReservationStatus {
   oczekująca = 'PENDING',
-  anulowana = 'CANCELLED',
+  anulowana = 'CANCELED',
   zrealizowana = 'COMPLETED',
 }
 
-const formatDate = (value: string): string => {
-  const date = new Date(value);
-  if (isNaN(date.getTime())) throw new Error('Invalid date format');
-
-  return (
-    date.toISOString().split('T')[0] +
-    ` (${date.toLocaleString('en-US', { weekday: 'long' })})`
-  );
+const IsAfter = (property: string, message?: string) => {
+  return (object: any, propertyName: string) => {
+    registerDecorator({
+      name: 'IsAfter',
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: message ?? `${propertyName} must be after ${property}`,
+      },
+      constraints: [property],
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const relatedValue = (args.object as any)[args.constraints[0]];
+          if (!value || !relatedValue) return false; // Ensure both values exist
+          return new Date(value) > new Date(relatedValue);
+        },
+      },
+    });
+  };
 };
+
+export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export class ReservationDto {
   @IsString()
@@ -44,17 +64,16 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{4}-\d{2}-\d{2} \([A-Za-z]+\)$/, {
-    message: 'checkInDate must be in YYYY-MM-DD (Day) format',
+  @Matches(DAY_REGEX, {
+    message: 'check_in_date must be in YYYY-MM-DD format',
   })
-  @Transform(({ value }) => formatDate(value))
   check_in_date: Day;
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\d{4}-\d{2}-\d{2} \([A-Za-z]+\)$/, {
-    message: 'checkInDate must be in YYYY-MM-DD (Day) format',
+  @Matches(DAY_REGEX, {
+    message: 'check_out_date must be in YYYY-MM-DD format',
   })
-  @Transform(({ value }) => formatDate(value))
+  @IsAfter('check_in_date', 'check_out_date must be after check_in_date')
   check_out_date: Day;
 }

@@ -17,7 +17,7 @@ export class ReservationService {
 
     const existingReservation = await this.findReservation(reservationId);
 
-    if (['CANCELLED', 'COMPLETED'].includes(status)) {
+    if (['CANCELED', 'COMPLETED'].includes(status)) {
       if (existingReservation) {
         await this.updateReservation(reservationId, { status });
       }

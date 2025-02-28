@@ -1,6 +1,10 @@
 import { model, Schema } from 'mongoose';
+import {
+  DAY_REGEX,
+  ReservationStatus as ReservationStatusEnum,
+} from 'src/dto/reservation.dto';
 
-const RESERVATION_STATUSES = ['CANCELLED', 'PENDING', 'COMPLETED'] as const;
+const RESERVATION_STATUSES = ['CANCELED', 'PENDING', 'COMPLETED'] as const;
 type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
 export type Day = `${number}-${number}-${number}`;
 
@@ -24,16 +28,16 @@ export const ReservationSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value),
-      message: 'checkInDate must be in YYYY-MM-DD format',
+      validator: (value: string) => DAY_REGEX.test(value),
+      message: 'check_in_date must be in YYYY-MM-DD format',
     },
   },
   checkOutDate: {
     type: String,
     required: true,
     validate: {
-      validator: (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value),
-      message: 'checkInDate must be in YYYY-MM-DD format',
+      validator: (value: string) => DAY_REGEX.test(value),
+      message: 'check_out_date must be in YYYY-MM-DD format',
     },
   },
 });
@@ -47,9 +51,9 @@ export const englishStatusMap: Record<
   PolishReservationStatus,
   ReservationStatus
 > = {
-  oczekująca: 'PENDING',
-  anulowana: 'CANCELLED',
-  zrealizowana: 'COMPLETED',
+  oczekująca: ReservationStatusEnum.oczekująca,
+  anulowana: ReservationStatusEnum.anulowana,
+  zrealizowana: ReservationStatusEnum.zrealizowana,
 };
 
 type ReservationFileRow = {
@@ -67,7 +71,7 @@ export const toDbReservation = (
   return {
     reservationId: fileReservation.reservation_id,
     guestName: fileReservation.guest_name,
-    status: englishStatusMap[fileReservation.status],
+    status: fileReservation.status,
     checkInDate: fileReservation.check_in_date,
     checkOutDate: fileReservation.check_out_date,
   };

@@ -4,12 +4,15 @@ import { Task } from 'src/tasks/tasks.schema';
 import { QUEUE_NAME } from './queue.service';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import * as xlsx from 'xlsx';
-import { createReadStream } from 'fs';
+import * as fs from 'fs';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { ReservationDto } from 'src/dto/reservation.dto';
+import { chunkify } from 'src/helpers/array';
+
+const DB_INSERT_BATCH_SIZE = 10;
 
 @Processor(QUEUE_NAME)
 @Injectable()
@@ -28,15 +31,16 @@ export class QueueWorker extends WorkerHost {
     try {
       console.log(`📥 Przetwarzanie pliku: ${filePath}`);
 
-      const stream = createReadStream(filePath);
-      const workbook = xlsx.read(stream, { type: 'file' });
+      const buffer = await fs.promises.readFile(filePath);
+      const workbook = xlsx.read(buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const jsonRows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
         raw: false,
       });
+      const validatedJsonRows: ReservationDto[] = [];
 
       for (const [index, rowContent] of jsonRows.entries()) {
-        const rowNumber = index + 2; // numbering starts from one inn Excel files, also counting header
+        const rowNumber = index + 2; // numbering starts from one in Excel files, also counting header
         const reservation = plainToInstance(ReservationDto, rowContent);
         const validationErrors = await validate(reservation);
 
@@ -44,6 +48,10 @@ export class QueueWorker extends WorkerHost {
           errors.push(
             `Błędny wiersz ${rowNumber}: ${JSON.stringify(rowContent)} | ${JSON.stringify(validationErrors)}`,
           );
+        }
+
+        if (!errors.length) {
+          validatedJsonRows.push(reservation);
         }
       }
 
@@ -53,12 +61,19 @@ export class QueueWorker extends WorkerHost {
         console.error(
           `❌ Wystąpiły błędy walidacji podczas przetwarzania ${taskId}`,
         );
+        console.error(errors);
         return;
       }
 
-      for (const row of jsonRows) {
-        const reservation = plainToInstance(ReservationDto, row);
-        await this.reservationService.processReservation(reservation);
+      const dbJobsChunks = chunkify(
+        validatedJsonRows.map((reservation) =>
+          this.reservationService.processReservation(reservation),
+        ),
+        DB_INSERT_BATCH_SIZE,
+      );
+
+      for (const chunk of dbJobsChunks) {
+        await Promise.all(chunk);
       }
 
       await this.tasksService.updateTaskStatus(taskId, 'COMPLETED');
@@ -68,28 +83,4 @@ export class QueueWorker extends WorkerHost {
       console.error(`❌ Błąd podczas przetwarzania ${taskId}:`, error);
     }
   }
-
-  //   onModuleInit() {
-  //     console.log('Worker init');
-  //     this.worker = new Worker(
-  //       QUEUE_NAME,
-  //       async (job: Job<Task>) => {
-  //         await this.process(job);
-  //       },
-  //       //   { connection: redisConnection },
-  //     );
-
-  //     this.worker.on('completed', (job) =>
-  //       console.log(`✅ Job ${job.id} completed`),
-  //     );
-  //     this.worker.on('failed', (job, err) =>
-  //       console.error(`❌ Job ${job?.id} failed: ${err.message}`),
-  //     );
-
-  //     console.log(`🚀 Worker started for queue: ${QUEUE_NAME}`);
-  //   }
-
-  //   async onModuleDestroy() {
-  //     await this.worker?.close();
-  //   }
 }
