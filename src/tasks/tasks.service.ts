@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Task } from './tasks.schema';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskStatus } from 'src/model/task.model.js';
+import { TaskStatus } from 'src/tasks/tasks.schema';
 import * as fs from 'fs';
 import * as path from 'path';
 import { QueueService } from 'src/queue/queue.service';
@@ -65,9 +65,9 @@ export class TasksService {
 
       const content = validationErrors.join('\n');
       await fs.promises.writeFile(filePath, content, 'utf-8');
-      console.log(`📄 Raport zapisany: ${filePath}`);
+      console.log(`📄 Report saved: ${filePath}`);
     } catch (error: any) {
-      console.error(`❌ Błąd zapisu raportu dla ${taskId}:`, error);
+      console.error(`❌ Error saving report for ${taskId}:`, error);
     }
   }
 }

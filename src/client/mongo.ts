@@ -15,7 +15,7 @@ const mongo = async (configService: ConfigService) => {
     mongoConnection = mongoose.connection.db;
     return mongoConnection;
   } catch (err: any) {
-    console.error(`Problem connecting with mongo: ${err}`);
+    console.error(`❌ Problem connecting with mongo: ${err}`);
   }
 };
 

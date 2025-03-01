@@ -9,7 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { TasksService } from 'src/tasks/tasks.service';
-import { ReservationDto } from 'src/dto/reservation.dto';
+import { ReservationDto } from 'src/reservation/reservation.dto';
 import { chunkify } from 'src/helpers/array';
 
 const DB_INSERT_BATCH_SIZE = 10;
@@ -29,7 +29,8 @@ export class QueueWorker extends WorkerHost {
     const errors: string[] = [];
 
     try {
-      console.log(`📥 Przetwarzanie pliku: ${filePath}`);
+      console.log(`📥 Processing file: ${filePath}`);
+      await this.tasksService.updateTaskStatus(taskId, 'IN_PROGRESS');
 
       const buffer = await fs.promises.readFile(filePath);
       const workbook = xlsx.read(buffer, { type: 'buffer' });
@@ -59,9 +60,8 @@ export class QueueWorker extends WorkerHost {
         await this.tasksService.saveValidationReport(taskId, errors);
         await this.tasksService.updateTaskStatus(taskId, 'FAILED');
         console.error(
-          `❌ Wystąpiły błędy walidacji podczas przetwarzania ${taskId}`,
+          `❌ Validation errors occurred while processing ${taskId}`,
         );
-        console.error(errors);
         return;
       }
 
@@ -77,10 +77,10 @@ export class QueueWorker extends WorkerHost {
       }
 
       await this.tasksService.updateTaskStatus(taskId, 'COMPLETED');
-      console.log(`✅ Zadanie ${taskId} zakończone.`);
+      console.log(`✅ Task ${taskId} completed.`);
     } catch (error) {
       await this.tasksService.updateTaskStatus(taskId, 'FAILED');
-      console.error(`❌ Błąd podczas przetwarzania ${taskId}:`, error);
+      console.error(`❌ Error while processing ${taskId}:`, error);
     }
   }
 }

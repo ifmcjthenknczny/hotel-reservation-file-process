@@ -1,12 +1,9 @@
 import { model, Schema } from 'mongoose';
-import {
-  DAY_REGEX,
-  ReservationStatus as ReservationStatusEnum,
-} from 'src/dto/reservation.dto';
+import { ReservationStatus as ReservationStatusEnum } from 'src/reservation/reservation.dto';
+import { Day, DAY_REGEX } from 'src/helpers/validate';
 
 const RESERVATION_STATUSES = ['CANCELED', 'PENDING', 'COMPLETED'] as const;
 type ReservationStatus = (typeof RESERVATION_STATUSES)[number];
-export type Day = `${number}-${number}-${number}`;
 
 export type Reservation = {
   reservationId: string;
@@ -59,7 +56,6 @@ export const englishStatusMap: Record<
 type ReservationFileRow = {
   reservation_id: string;
   guest_name: string;
-  // status: PolishReservationStatus;
   status: ReservationStatus;
   check_in_date: Day;
   check_out_date: Day;

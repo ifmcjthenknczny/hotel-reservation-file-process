@@ -1,43 +1,13 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  Matches,
-  registerDecorator,
-  ValidationArguments,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { Day } from 'src/model/reservation.model';
-import { englishStatusMap } from 'src/model/reservation.model';
+import { englishStatusMap } from 'src/reservation/reservation.model';
+import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validate';
 
 export enum ReservationStatus {
   oczekująca = 'PENDING',
   anulowana = 'CANCELED',
   zrealizowana = 'COMPLETED',
 }
-
-const IsAfter = (property: string, message?: string) => {
-  return (object: any, propertyName: string) => {
-    registerDecorator({
-      name: 'IsAfter',
-      target: object.constructor,
-      propertyName,
-      options: {
-        message: message ?? `${propertyName} must be after ${property}`,
-      },
-      constraints: [property],
-      validator: {
-        validate(value: any, args: ValidationArguments) {
-          const relatedValue = (args.object as any)[args.constraints[0]];
-          if (!value || !relatedValue) return false; // Ensure both values exist
-          return new Date(value) > new Date(relatedValue);
-        },
-      },
-    });
-  };
-};
-
-export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export class ReservationDto {
   @IsString()

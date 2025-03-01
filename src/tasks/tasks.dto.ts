@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TASK_STATUSES } from 'src/model/task.model';
+import { TASK_STATUSES } from 'src/tasks/tasks.schema';
 
 export class TaskDto {
   @IsString()

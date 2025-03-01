@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ReservationDto } from 'src/dto/reservation.dto';
-import { toDbReservation } from 'src/model/reservation.model';
-import { Reservation } from 'src/model/reservation.model';
+import { ReservationDto } from 'src/reservation/reservation.dto';
+import { toDbReservation } from 'src/reservation/reservation.model';
+import { Reservation } from 'src/reservation/reservation.model';
 
 @Injectable()
 export class ReservationService {

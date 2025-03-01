@@ -1,8 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-import { TASK_STATUSES } from 'src/model/task.model';
 
-export type TaskDocument = Task & Document;
+export const TASK_STATUSES = [
+  'PENDING',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'FAILED',
+] as const;
+
+export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 @Schema({ timestamps: true })
 export class Task {
