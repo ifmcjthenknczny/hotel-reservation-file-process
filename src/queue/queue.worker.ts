@@ -31,7 +31,7 @@ export class QueueWorker extends WorkerHost {
     const errors: string[] = [];
 
     try {
-      this.logger.log(`📥 Processing file: ${filePath}`);
+      this.logger.log(`Processing file: ${filePath}`);
       await this.tasksService.updateTaskStatus(taskId, 'IN_PROGRESS');
 
       const buffer = await fs.promises.readFile(filePath);
@@ -62,7 +62,7 @@ export class QueueWorker extends WorkerHost {
         await this.tasksService.saveValidationReport(taskId, errors);
         await this.tasksService.updateTaskStatus(taskId, 'FAILED');
         this.logger.error(
-          `❌ Validation errors occurred while processing ${taskId}`,
+          `Validation errors occurred while processing ${taskId}`,
         );
         return;
       }
@@ -79,10 +79,10 @@ export class QueueWorker extends WorkerHost {
       }
 
       await this.tasksService.updateTaskStatus(taskId, 'COMPLETED');
-      this.logger.log(`✅ Task ${taskId} completed.`);
+      this.logger.log(`Task ${taskId} completed.`);
     } catch (error) {
       await this.tasksService.updateTaskStatus(taskId, 'FAILED');
-      this.logger.error(`❌ Error while processing ${taskId}:`, error);
+      this.logger.error(`Error while processing ${taskId}:`, error);
     }
   }
 }

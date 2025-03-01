@@ -8,9 +8,25 @@ import { AppService } from './app.service';
 import { QueueModule } from './queue/queue.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { validateConfig } from './app.config';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport:
+          process.env.NODE_ENV === 'production'
+            ? undefined
+            : {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  translateTime: 'HH:MM:ss Z',
+                  ignore: 'pid,hostname',
+                },
+              },
+      },
+    }),
     ConfigModule.forRoot({ isGlobal: true, validate: validateConfig }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

@@ -65,9 +65,9 @@ export class TasksService {
       }
       const content = validationErrors.join('\n');
       await fs.promises.writeFile(filePath, content, 'utf-8');
-      this.logger.log(`📄 Report saved: ${filePath}`);
+      this.logger.log(`Report saved: ${filePath}`);
     } catch (error: any) {
-      this.logger.error(`❌ Error saving report for ${taskId}:`, error);
+      this.logger.error(`Error saving report for ${taskId}:`, error);
     }
   }
 }

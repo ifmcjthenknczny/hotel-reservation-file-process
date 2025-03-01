@@ -13,8 +13,8 @@ export class QueueService {
   ) {}
 
   async processReservationFile(filePath: string, taskId: string) {
-    this.logger.log(`📝 Adding file ${filePath} to the queue...`);
+    this.logger.log(`Adding file ${filePath} to the queue...`);
     await this.queue.add(QUEUE_NAME, { filePath, taskId }, { attempts: 3 });
-    this.logger.log(`📌 Task ${taskId} added to the queue.`);
+    this.logger.log(`Task ${taskId} added to the queue.`);
   }
 }

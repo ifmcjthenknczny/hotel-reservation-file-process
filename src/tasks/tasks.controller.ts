@@ -1,3 +1,4 @@
+import { validate } from 'class-validator';
 import {
   BadRequestException,
   Controller,
@@ -32,8 +33,7 @@ export class TasksController {
 
     const dto = new UploadFileDto();
     dto.file = file;
-    const errors = await new ValidationPipe().transform(dto, {
-      type: 'body',
+    const errors = await validate(dto, {
       whitelist: true,
       forbidNonWhitelisted: true,
     });
