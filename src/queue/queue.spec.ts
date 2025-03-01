@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Queue } from './queue';
+import { Queue } from 'bullmq';
 
 describe('Queue', () => {
   let provider: Queue;

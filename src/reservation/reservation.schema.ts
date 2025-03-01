@@ -1,6 +1,7 @@
 import { Day, DAY_REGEX } from 'src/helpers/validate';
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { ReservationDto } from './reservation.dto';
+import { Document } from 'mongoose';
 
 export enum ReservationStatusEnum {
   oczekująca = 'PENDING',
