@@ -1,13 +1,11 @@
 import { IsEnum, IsNotEmpty, IsString, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { englishStatusMap } from 'src/reservation/reservation.model';
+import {
+  PolishReservationStatus,
+  ReservationStatus,
+  ReservationStatusEnum,
+} from 'src/reservation/reservation.schema';
 import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validate';
-
-export enum ReservationStatus {
-  oczekująca = 'PENDING',
-  anulowana = 'CANCELED',
-  zrealizowana = 'COMPLETED',
-}
 
 export class ReservationDto {
   @IsString()
@@ -18,13 +16,10 @@ export class ReservationDto {
   @IsNotEmpty()
   guest_name: string;
 
-  @IsEnum(ReservationStatus)
+  @IsEnum(ReservationStatusEnum)
   @IsNotEmpty()
-  @Transform(({ value }): ReservationStatus => {
-    if (typeof value !== 'string') {
-      throw new Error('Invalid status type');
-    }
-    const mappedStatus = englishStatusMap[value];
+  @Transform(({ value }): PolishReservationStatus => {
+    const mappedStatus = ReservationStatusEnum[value];
     if (!mappedStatus) {
       throw new Error(`Invalid status: ${value}`);
     }
@@ -44,6 +39,6 @@ export class ReservationDto {
   @Matches(DAY_REGEX, {
     message: 'check_out_date must be in YYYY-MM-DD format',
   })
-  @IsAfter('check_in_date', 'check_out_date must be after check_in_date')
+  @IsAfter('check_in_date')
   check_out_date: Day;
 }

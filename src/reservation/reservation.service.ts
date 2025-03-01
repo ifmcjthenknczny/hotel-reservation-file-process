@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ReservationDto } from 'src/reservation/reservation.dto';
-import { toDbReservation } from 'src/reservation/reservation.model';
-import { Reservation } from 'src/reservation/reservation.model';
+import {
+  toDbReservation,
+  DbReservation,
+} from 'src/reservation/reservation.schema';
 
 @Injectable()
 export class ReservationService {
@@ -30,16 +32,16 @@ export class ReservationService {
 
   private async findReservation(
     reservationId: string,
-  ): Promise<Reservation | null> {
+  ): Promise<DbReservation | null> {
     return this.reservationModel
       .findOne({ reservationId })
-      .lean<Reservation>()
+      .lean<DbReservation>()
       .exec();
   }
 
   private async updateReservation(
     reservationId: string,
-    updateData: Partial<Reservation>,
+    updateData: Partial<DbReservation>,
   ): Promise<void> {
     await this.reservationModel
       .updateOne({ reservationId }, { $set: updateData })
@@ -47,7 +49,7 @@ export class ReservationService {
   }
 
   private async createReservation(
-    reservationData: Partial<Reservation>,
+    reservationData: Partial<DbReservation>,
   ): Promise<void> {
     const newReservation = new this.reservationModel(reservationData);
     await newReservation.save();
