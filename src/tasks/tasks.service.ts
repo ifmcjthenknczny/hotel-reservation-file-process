@@ -7,8 +7,9 @@ import { TaskStatus } from 'src/tasks/tasks.schema';
 import * as fs from 'fs';
 import * as path from 'path';
 import { QueueService } from 'src/queue/queue.service';
+import { Logger } from 'nestjs-pino';
 
-export const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
+const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
 export const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class TasksService {
   constructor(
     @InjectModel('Task') private readonly taskModel: Model<Task>,
     private readonly queueService: QueueService,
+    private readonly logger: Logger,
   ) {}
   async createTask(file: Express.Multer.File) {
     const taskId: string = uuidv4();
@@ -58,16 +60,14 @@ export class TasksService {
     try {
       const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
       const filePath = path.join(reportsDir, `${taskId}.txt`);
-
       if (!fs.existsSync(reportsDir)) {
         await fs.promises.mkdir(reportsDir, { recursive: true });
       }
-
       const content = validationErrors.join('\n');
       await fs.promises.writeFile(filePath, content, 'utf-8');
-      console.log(`📄 Report saved: ${filePath}`);
+      this.logger.log(`📄 Report saved: ${filePath}`);
     } catch (error: any) {
-      console.error(`❌ Error saving report for ${taskId}:`, error);
+      this.logger.error(`❌ Error saving report for ${taskId}:`, error);
     }
   }
 }

@@ -6,9 +6,6 @@ export class AppConfig {
   MONGO_URI: string;
 
   @IsString()
-  DATABASE_NAME: string;
-
-  @IsString()
   REDIS_URI: string;
 }
 

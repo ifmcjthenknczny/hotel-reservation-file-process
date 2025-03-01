@@ -1,4 +1,9 @@
-import { registerDecorator, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 
 export const IsAfter = (property: string, message?: string) => {
   return (object: any, propertyName: string) => {
@@ -25,3 +30,19 @@ export const IsAfter = (property: string, message?: string) => {
 
 export type Day = `${number}-${number}-${number}`;
 export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+@ValidatorConstraint({ name: 'fileExtension', async: false })
+export class FileExtensionValidator implements ValidatorConstraintInterface {
+  validate(file: Express.Multer.File, args: ValidationArguments) {
+    if (!file) {
+      return false;
+    }
+    const allowedExtensions = args.constraints as string[];
+    const fileExtension = file.originalname.split('.').pop()?.toLowerCase();
+    return fileExtension ? allowedExtensions.includes(fileExtension) : false;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return `Invalid file type. Only ${args.constraints.join(', ')} files are allowed.`;
+  }
+}

@@ -11,6 +11,7 @@ import { ReservationService } from 'src/reservation/reservation.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { ReservationDto } from 'src/reservation/reservation.dto';
 import { chunkify } from 'src/helpers/array';
+import { Logger } from 'nestjs-pino';
 
 const DB_INSERT_BATCH_SIZE = 10;
 
@@ -20,6 +21,7 @@ export class QueueWorker extends WorkerHost {
   constructor(
     private readonly tasksService: TasksService,
     private readonly reservationService: ReservationService,
+    private readonly logger: Logger,
   ) {
     super();
   }
@@ -29,7 +31,7 @@ export class QueueWorker extends WorkerHost {
     const errors: string[] = [];
 
     try {
-      console.log(`📥 Processing file: ${filePath}`);
+      this.logger.log(`📥 Processing file: ${filePath}`);
       await this.tasksService.updateTaskStatus(taskId, 'IN_PROGRESS');
 
       const buffer = await fs.promises.readFile(filePath);
@@ -59,7 +61,7 @@ export class QueueWorker extends WorkerHost {
       if (errors.length) {
         await this.tasksService.saveValidationReport(taskId, errors);
         await this.tasksService.updateTaskStatus(taskId, 'FAILED');
-        console.error(
+        this.logger.error(
           `❌ Validation errors occurred while processing ${taskId}`,
         );
         return;
@@ -77,10 +79,10 @@ export class QueueWorker extends WorkerHost {
       }
 
       await this.tasksService.updateTaskStatus(taskId, 'COMPLETED');
-      console.log(`✅ Task ${taskId} completed.`);
+      this.logger.log(`✅ Task ${taskId} completed.`);
     } catch (error) {
       await this.tasksService.updateTaskStatus(taskId, 'FAILED');
-      console.error(`❌ Error while processing ${taskId}:`, error);
+      this.logger.error(`❌ Error while processing ${taskId}:`, error);
     }
   }
 }

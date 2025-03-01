@@ -19,13 +19,14 @@ export class ReservationService {
 
     const existingReservation = await this.findReservation(reservationId);
 
-    if (['CANCELED', 'COMPLETED'].includes(status)) {
-      if (existingReservation) {
-        await this.updateReservation(reservationId, { status });
-      }
-    } else if (existingReservation) {
-      await this.updateReservation(reservationId, { status, ...data });
-    } else {
+    const isActiveStatus = !['CANCELED', 'COMPLETED'].includes(status);
+
+    if (existingReservation) {
+      await this.updateReservation(reservationId, {
+        status,
+        ...(isActiveStatus && { data }),
+      });
+    } else if (isActiveStatus) {
       await this.createReservation({ reservationId, status, ...data });
     }
   }

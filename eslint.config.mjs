@@ -33,7 +33,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/require-await': 'off'
+      '@typescript-eslint/require-await': 'off',
+      'no-console': 'warn'
     },
   },
 );
