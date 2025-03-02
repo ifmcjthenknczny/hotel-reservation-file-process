@@ -12,6 +12,7 @@ import { TasksService } from 'src/tasks/tasks.service';
 import { ReservationDto } from 'src/reservation/reservation.dto';
 import { chunkify } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
+import { formatReportErrorMessage } from 'src/helpers/validation';
 
 const DB_INSERT_BATCH_SIZE = 10;
 
@@ -44,13 +45,29 @@ export class QueueWorker extends WorkerHost {
 
       for (const [index, rowContent] of jsonRows.entries()) {
         const rowNumber = index + 2; // numbering starts from one in Excel files, also counting header
-        const reservation = plainToInstance(ReservationDto, rowContent);
-        const validationErrors = await validate(reservation);
-
-        if (validationErrors.length) {
+        let reservation: ReservationDto | null = null;
+        try {
+          reservation = plainToInstance(ReservationDto, rowContent);
+          const validationErrors = await validate(reservation);
+          if (validationErrors.length) {
+            errors.push(
+              ...validationErrors.map((error) =>
+                formatReportErrorMessage(
+                  Object.values(error.constraints || {}).join(', ') ||
+                    `Unidentified problem with column ${error.property}`,
+                  rowNumber,
+                ),
+              ),
+            );
+          }
+        } catch (error: any) {
           errors.push(
-            `Błędny wiersz ${rowNumber}: ${JSON.stringify(rowContent)} | ${JSON.stringify(validationErrors)}`,
+            formatReportErrorMessage(
+              error.message || 'Unidentified error',
+              rowNumber,
+            ),
           );
+          continue;
         }
 
         if (!errors.length) {

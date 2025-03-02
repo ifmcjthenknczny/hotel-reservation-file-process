@@ -64,3 +64,10 @@ export class MulterFileTypeValidator implements ValidatorConstraintInterface {
     return `Only files of mimetypes ${args.constraints?.join(', ') || 'specified types'} are allowed.`;
   }
 }
+
+export const formatReportErrorMessage = (
+  message: string,
+  rowNumber: number,
+) => {
+  return `Problem with row ${rowNumber}: ${message}`;
+};

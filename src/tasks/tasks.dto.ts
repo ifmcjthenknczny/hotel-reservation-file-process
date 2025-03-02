@@ -12,7 +12,7 @@ import { TASK_STATUSES, TaskStatus } from 'src/tasks/tasks.schema';
 import {
   FileExtensionValidator,
   MulterFileTypeValidator,
-} from 'src/helpers/validate';
+} from 'src/helpers/validation';
 
 export class TaskDto {
   @IsUUID()

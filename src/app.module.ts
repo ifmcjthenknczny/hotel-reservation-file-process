@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TasksModule } from './tasks/tasks.module';
-import { Task, TaskSchema } from './tasks/tasks.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -23,6 +22,7 @@ import { LoggerModule } from 'nestjs-pino';
                   colorize: true,
                   translateTime: 'HH:MM:ss Z',
                   ignore: 'pid,hostname',
+                  messageFormat: '{msg}',
                 },
               },
       },
@@ -35,7 +35,6 @@ import { LoggerModule } from 'nestjs-pino';
       }),
       inject: [ConfigService],
     }),
-    MongooseModule.forFeature([{ name: Task.name, schema: TaskSchema }]),
     TasksModule,
     QueueModule,
     ReservationModule,

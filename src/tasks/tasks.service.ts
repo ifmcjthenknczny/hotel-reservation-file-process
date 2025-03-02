@@ -10,7 +10,7 @@ import { Logger } from 'nestjs-pino';
 import { TaskDto } from './tasks.dto';
 
 const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
-export const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
+const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
 
 @Injectable()
 export class TasksService {

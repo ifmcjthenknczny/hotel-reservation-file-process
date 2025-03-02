@@ -3,7 +3,6 @@ import {
   BadRequestException,
   Controller,
   Get,
-  Header,
   NotFoundException,
   Post,
   Param,
@@ -16,8 +15,6 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TasksService } from './tasks.service';
 import * as fs from 'fs';
-import * as path from 'path';
-import { VALIDATION_REPORTS_DIRECTORY } from './tasks.service';
 import { TaskIdDto, UploadFileDto } from './tasks.dto';
 
 @Controller('tasks')
@@ -52,24 +49,22 @@ export class TasksController {
 
   @Get('report/:taskId')
   @UsePipes(new ValidationPipe({ transform: true }))
-  @Header('Content-Type', 'text/plain')
-  @Header('Content-Disposition', 'attachment; filename="report.txt"')
   async getTaskReport(@Param() params: TaskIdDto) {
-    const reportPath = path.join(
-      process.cwd(),
-      VALIDATION_REPORTS_DIRECTORY,
-      `${params.taskId}.txt`,
-    );
-
     try {
+      const { reportPath } = await this.tasksService.getTask(params.taskId);
+      if (!reportPath) {
+        throw new NotFoundException();
+      }
       await fs.promises.access(reportPath);
+      const fileStream = fs.createReadStream(reportPath);
+      return new StreamableFile(fileStream, {
+        disposition: `attachment; filename="${params.taskId}.txt"`,
+        type: 'text/plain',
+      });
     } catch {
       throw new NotFoundException(
         `Report for Task ID ${params.taskId} not found.`,
       );
     }
-
-    const fileStream = fs.createReadStream(reportPath);
-    return new StreamableFile(fileStream);
   }
 }

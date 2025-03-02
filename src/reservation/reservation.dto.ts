@@ -5,7 +5,7 @@ import {
   ReservationStatus,
   ReservationStatusEnum,
 } from 'src/reservation/reservation.schema';
-import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validate';
+import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validation';
 
 export class ReservationDto {
   @IsString()
@@ -19,11 +19,11 @@ export class ReservationDto {
   @IsEnum(ReservationStatusEnum)
   @IsNotEmpty()
   @Transform(({ value }): PolishReservationStatus => {
-    const mappedStatus = ReservationStatusEnum[value];
-    if (!mappedStatus) {
+    const englishStatus = ReservationStatusEnum[value.trim()];
+    if (!englishStatus) {
       throw new Error(`Invalid status: ${value}`);
     }
-    return mappedStatus;
+    return englishStatus;
   })
   status: ReservationStatus;
 
