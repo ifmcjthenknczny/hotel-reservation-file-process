@@ -6,20 +6,26 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export const IsAfter = (property: string, message?: string) => {
-  return (object: any, propertyName: string) => {
+export const IsAfter = <T extends Record<string, any>>(
+  property: keyof T,
+  message?: string,
+) => {
+  return (object: T, propertyName: string) => {
     registerDecorator({
       name: 'IsAfter',
       target: object.constructor,
       propertyName,
       options: {
-        message: message ?? `${propertyName} must be after ${property}`,
+        message:
+          message ?? `${propertyName} must be after ${property.toString()}`,
       },
       constraints: [property],
       validator: {
         validate(value: any, args: ValidationArguments) {
-          const relatedValue = (args.object as any)[args.constraints[0]];
-          if (!value || !relatedValue) {
+          const relatedValue = (args.object as Record<string, unknown>)[
+            args.constraints[0] as string
+          ];
+          if (typeof value !== 'string' || typeof relatedValue !== 'string') {
             return false;
           }
           return new Date(value) > new Date(relatedValue);

@@ -32,8 +32,14 @@ export class ReservationDto {
     example: 'oczekująca',
     description: 'Status of the reservation',
   })
-  @Transform(({ value }): PolishReservationStatus => {
-    const englishStatus = ReservationStatusEnum[value.trim()];
+  @Transform(({ value }: { value: unknown }): ReservationStatus => {
+    if (typeof value !== 'string') {
+      throw new Error(
+        `Invalid status type: expected string, got ${typeof value}`,
+      );
+    }
+    const trimmedValue = value.trim() as PolishReservationStatus;
+    const englishStatus = ReservationStatusEnum[trimmedValue];
     if (!englishStatus) {
       throw new Error(`Invalid status: ${value}`);
     }

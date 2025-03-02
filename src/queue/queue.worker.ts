@@ -47,11 +47,13 @@ export class QueueWorker extends WorkerHost {
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
     } catch (error: any) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       await this.tasksService.updateTask(taskId, {
         status: 'FAILED',
-        failReason: error.message,
+        failReason: errorMessage,
       });
-      this.logger.error(`Error while processing ${taskId}:`, error.message);
+      this.logger.error(`Error while processing ${taskId}:`, errorMessage);
     }
   }
 
@@ -94,13 +96,10 @@ export class QueueWorker extends WorkerHost {
         } else {
           validatedJsonRows = [];
         }
-      } catch (error: any) {
-        errors.push(
-          formatReportErrorMessage(
-            error.message || 'Unidentified error',
-            rowNumber,
-          ),
-        );
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unidentified error';
+        errors.push(formatReportErrorMessage(errorMessage, rowNumber));
       }
     }
     return { errors, validatedJsonRows };
