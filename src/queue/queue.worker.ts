@@ -32,7 +32,7 @@ export class QueueWorker extends WorkerHost {
 
     try {
       this.logger.log(`Processing file: ${filePath}`);
-      await this.tasksService.updateTaskStatus(taskId, 'IN_PROGRESS');
+      await this.tasksService.updateTask(taskId, { status: 'IN_PROGRESS' });
 
       const buffer = await fs.promises.readFile(filePath);
       const workbook = xlsx.read(buffer, { type: 'buffer' });
@@ -59,8 +59,14 @@ export class QueueWorker extends WorkerHost {
       }
 
       if (errors.length) {
-        await this.tasksService.saveValidationReport(taskId, errors);
-        await this.tasksService.updateTaskStatus(taskId, 'FAILED');
+        const reportPath = await this.tasksService.saveErrorReport(
+          taskId,
+          errors,
+        );
+        await this.tasksService.updateTask(taskId, {
+          status: 'FAILED',
+          reportPath,
+        });
         this.logger.error(
           `Validation errors occurred while processing ${taskId}`,
         );
@@ -78,11 +84,14 @@ export class QueueWorker extends WorkerHost {
         await Promise.all(chunk);
       }
 
-      await this.tasksService.updateTaskStatus(taskId, 'COMPLETED');
+      await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
-    } catch (error) {
-      await this.tasksService.updateTaskStatus(taskId, 'FAILED');
-      this.logger.error(`Error while processing ${taskId}:`, error);
+    } catch (error: any) {
+      await this.tasksService.updateTask(taskId, {
+        status: 'FAILED',
+        failReason: error.message,
+      });
+      this.logger.error(`Error while processing ${taskId}:`, error.message);
     }
   }
 }

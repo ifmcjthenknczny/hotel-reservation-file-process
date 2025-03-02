@@ -12,21 +12,38 @@ export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 @Schema({ timestamps: true })
 export class Task extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   taskId: string;
 
   @Prop({ required: true })
   filePath: string;
 
   @Prop({
-    required: false,
+    required: true,
     enum: TASK_STATUSES,
     default: 'PENDING',
   })
-  status: string;
+  status: TaskStatus;
 
-  @Prop({ required: true })
+  @Prop({
+    required: function (this: Task) {
+      return this.status === 'FAILED';
+    },
+  })
+  reportPath?: string;
+
+  @Prop({
+    required: function (this: Task) {
+      return this.status === 'FAILED';
+    },
+  })
+  failReason?: string;
+
+  @Prop({ required: true, default: Date.now })
   createdAt: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

@@ -20,16 +20,16 @@ export type DbReservation = {
   checkOutDate: Day;
 };
 
-@Schema()
+@Schema({ timestamps: true })
 export class Reservation extends Document {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   reservationId: string;
 
   @Prop({ required: true })
   guestName: string;
 
   @Prop({ required: true, enum: Object.values(ReservationStatusEnum) })
-  status: string;
+  status: ReservationStatus;
 
   @Prop({
     required: true,
@@ -38,7 +38,7 @@ export class Reservation extends Document {
       message: 'check_in_date must be in YYYY-MM-DD format',
     },
   })
-  checkInDate: string;
+  checkInDate: Day;
 
   @Prop({
     required: true,
@@ -47,7 +47,7 @@ export class Reservation extends Document {
       message: 'check_out_date must be in YYYY-MM-DD format',
     },
   })
-  checkOutDate: string;
+  checkOutDate: Day;
 }
 
 export const toDbReservation = (

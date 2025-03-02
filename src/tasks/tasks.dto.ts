@@ -6,8 +6,8 @@ import {
   IsString,
   IsUUID,
   Validate,
+  ValidateIf,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { TASK_STATUSES, TaskStatus } from 'src/tasks/tasks.schema';
 import { FileExtensionValidator } from 'src/helpers/validate';
 
@@ -21,15 +21,25 @@ export class TaskDto {
   filePath: string;
 
   @IsEnum(TASK_STATUSES)
+  @IsNotEmpty()
   status: TaskStatus;
 
+  @ValidateIf((task: TaskDto) => task.status === 'FAILED')
+  @IsString()
+  @IsNotEmpty()
+  reportPath: string;
+
+  @ValidateIf((task: TaskDto) => task.status === 'FAILED')
+  @IsString()
+  @IsNotEmpty()
+  failReason: string;
+
   @IsDate()
-  @Type(() => Date)
+  @IsNotEmpty()
   createdAt: Date;
 
   @IsDate()
   @IsOptional()
-  @Type(() => Date)
   updatedAt: Date;
 }
 

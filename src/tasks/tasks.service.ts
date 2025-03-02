@@ -3,11 +3,11 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Task } from './tasks.schema';
 import { v4 as uuidv4 } from 'uuid';
-import { TaskStatus } from 'src/tasks/tasks.schema';
 import * as fs from 'fs';
 import * as path from 'path';
 import { QueueService } from 'src/queue/queue.service';
 import { Logger } from 'nestjs-pino';
+import { TaskDto } from './tasks.dto';
 
 const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
 export const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
@@ -51,12 +51,24 @@ export class TasksService {
     return task;
   }
 
-  async updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    await this.taskModel.updateOne({ taskId }, { status: newStatus });
+  async updateTask(
+    taskId: string,
+    { status, reportPath, failReason }: Partial<TaskDto>,
+  ) {
+    // note that this function only allows to update values to not-null ones
+    await this.taskModel.updateOne(
+      { taskId },
+      {
+        ...(status && { status }),
+        ...(reportPath && { reportPath }),
+        ...(failReason && { failReason }),
+        ...((status || reportPath || failReason) && { updatedAt: new Date() }),
+      },
+    );
     return taskId;
   }
 
-  async saveValidationReport(taskId: string, validationErrors: string[]) {
+  async saveErrorReport(taskId: string, validationErrors: string[]) {
     try {
       const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
       const filePath = path.join(reportsDir, `${taskId}.txt`);
@@ -66,6 +78,7 @@ export class TasksService {
       const content = validationErrors.join('\n');
       await fs.promises.writeFile(filePath, content, 'utf-8');
       this.logger.log(`Report saved: ${filePath}`);
+      return filePath;
     } catch (error: any) {
       this.logger.error(`Error saving report for ${taskId}:`, error);
     }
