@@ -6,18 +6,29 @@ import {
   ReservationStatusEnum,
 } from 'src/reservation/reservation.schema';
 import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validation';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class ReservationDto {
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({
+    example: '12345',
+    description: 'Unique identifier for the reservation',
+  })
   reservation_id: string;
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: 'John Doe', description: 'Name of the guest' })
   guest_name: string;
 
   @IsEnum(ReservationStatusEnum)
   @IsNotEmpty()
+  @ApiProperty({
+    enum: ReservationStatusEnum,
+    example: 'oczekująca',
+    description: 'Status of the reservation',
+  })
   @Transform(({ value }): PolishReservationStatus => {
     const englishStatus = ReservationStatusEnum[value.trim()];
     if (!englishStatus) {
@@ -29,6 +40,10 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({
+    example: '2025-03-02',
+    description: 'Check-in date in YYYY-MM-DD format',
+  })
   @Matches(DAY_REGEX, {
     message: 'check_in_date must be in YYYY-MM-DD format',
   })
@@ -36,6 +51,10 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({
+    example: '2024-03-07',
+    description: 'Check-out date in YYYY-MM-DD format',
+  })
   @Matches(DAY_REGEX, {
     message: 'check_out_date must be in YYYY-MM-DD format',
   })

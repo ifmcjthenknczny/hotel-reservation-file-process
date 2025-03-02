@@ -15,14 +15,45 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TasksService } from './tasks.service';
 import * as fs from 'fs';
-import { TaskIdDto, UploadFileDto } from './tasks.dto';
+import { EXAMPLE_UUID, TaskIdDto, UploadFileDto } from './tasks.dto';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { TASK_STATUSES } from './tasks.schema';
 
 @Controller('tasks')
+@ApiTags('Tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload reservations file to process' })
+  @ApiResponse({
+    status: 201,
+    description: 'Upload successful, returns created taskId',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string', example: EXAMPLE_UUID },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file uploaded' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File upload',
+    type: UploadFileDto,
+  })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     const dto = new UploadFileDto();
     dto.file = file;
@@ -40,6 +71,27 @@ export class TasksController {
 
   @Get('status/:taskId')
   @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiOperation({ summary: 'Get task status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns task status',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              example: 'PENDING',
+              enum: [...TASK_STATUSES],
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid parameter' })
+  @ApiResponse({ status: 404, description: 'Task not found' })
   async getTaskStatus(@Param() params: TaskIdDto) {
     const task = await this.tasksService.getTask(params.taskId);
     return {
@@ -49,6 +101,22 @@ export class TasksController {
 
   @Get('report/:taskId')
   @UsePipes(new ValidationPipe({ transform: true }))
+  @ApiOperation({ summary: 'Download task report' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the task report file, automatically downloaded',
+    content: {
+      'text/plain': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+          example: 'Problem with row 3: Invalid status: anulowany',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid parameter' })
+  @ApiResponse({ status: 404, description: 'Report not found' })
   async getTaskReport(@Param() params: TaskIdDto) {
     try {
       const { reportPath } = await this.tasksService.getTask(params.taskId);
