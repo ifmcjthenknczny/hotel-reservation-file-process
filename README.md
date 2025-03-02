@@ -12,6 +12,27 @@ This project is a backend application built with NestJS, designed to process hot
 
 - **Task Management:** Supports asynchronous task processing and status updates with BullMq queue.
 
+## Setup and Installation
+
+1. Make sure you have already:
+- Docker and Docker Compose installed on your machine.
+- Yarn installed.
+
+2. Clone the Repository:
+```bash
+git clone https://github.com/ifmcjthenknczny/hotel-reservation-file-process
+cd hotel-reservation-file-process
+```
+
+3. Build and Start the Containers:
+Run the following command to start the application and MongoDB in Docker containers:
+
+```bash
+docker-compose up --build -d
+```
+
+This will build the project and run it in detached mode. The MongoDB and Redis (required for BullMq) databases will be available locally, and the app will be available at `http://localhost:3000`.
+
 ## API
 
 ### Swagger
@@ -95,27 +116,6 @@ Add the API key to your request headers like this:
 __Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only the status will be updated.__
 
 - **Error Report:** If errors are encountered during file processing, a .txt report is generated. This can be downloaded from the endpoint `/tasks/report/:taskId`.
-
-## Setup and Installation
-
-1. Make sure you have already:
-- Docker and Docker Compose installed on your machine.
-- Yarn installed.
-
-2. Clone the Repository:
-```bash
-git clone https://github.com/ifmcjthenknczny/hotel-reservation-file-process
-cd hotel-reservation-file-process
-```
-
-3. Build and Start the Containers:
-Run the following command to start the application and MongoDB in Docker containers:
-
-```bash
-docker-compose up --build -d
-```
-
-This will build the project and run it in detached mode. The MongoDB and Redis (required for BullMq) databases will be available locally, and the app will be available at `http://localhost:3000`.
 
 ## Notes
 
