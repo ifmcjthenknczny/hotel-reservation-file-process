@@ -14,7 +14,7 @@ import { chunkify } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
 import { formatReportErrorMessage } from 'src/helpers/validation';
 
-const DB_INSERT_BATCH_SIZE = 10;
+const DB_PROCESS_BATCH_SIZE = 10;
 
 @Processor(QUEUE_NAME)
 @Injectable()
@@ -42,7 +42,7 @@ export class QueueWorker extends WorkerHost {
         return;
       }
 
-      await this.insertToDb(validatedJsonRows);
+      await this.saveToDb(validatedJsonRows);
 
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
@@ -114,12 +114,12 @@ export class QueueWorker extends WorkerHost {
     this.logger.error(`Validation errors occurred while processing ${taskId}`);
   }
 
-  async insertToDb(validatedJsonRows: ReservationDto[]) {
+  async saveToDb(validatedJsonRows: ReservationDto[]) {
     const dbJobsChunks = chunkify(
       validatedJsonRows.map((reservation) =>
         this.reservationService.processReservation(reservation),
       ),
-      DB_INSERT_BATCH_SIZE,
+      DB_PROCESS_BATCH_SIZE,
     );
 
     for (const chunk of dbJobsChunks) {
