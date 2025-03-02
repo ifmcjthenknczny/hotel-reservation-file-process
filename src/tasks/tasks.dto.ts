@@ -18,7 +18,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export const EXAMPLE_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
 export class TaskDto {
-  @IsUUID()
+  @IsUUID('4')
   @IsNotEmpty()
   @ApiProperty({
     example: EXAMPLE_UUID,
@@ -108,11 +108,8 @@ export class UploadFileDto {
 
 export class TaskIdDto {
   @ApiProperty({ example: EXAMPLE_UUID, description: 'Task ID' })
-  @IsUUID(
-    {},
-    {
-      message: 'taskId should be a valid UUID. Please provide a correct UUID.',
-    },
-  )
+  @IsUUID('4', {
+    message: 'taskId should be a valid UUID. Please provide a correct UUID.',
+  })
   taskId: string;
 }
