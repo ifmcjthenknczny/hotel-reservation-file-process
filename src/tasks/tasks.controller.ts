@@ -63,7 +63,11 @@ export class TasksController {
     });
 
     if (validationErrors.length) {
-      throw new BadRequestException();
+      throw new BadRequestException(
+        validationErrors.map((error) =>
+          error.toString().replaceAll('\n', '').trim(),
+        ),
+      );
     }
     const task = await this.tasksService.createTask(file);
     return { taskId: task.taskId };
@@ -118,11 +122,15 @@ export class TasksController {
   @ApiResponse({ status: 400, description: 'Invalid parameter' })
   @ApiResponse({ status: 404, description: 'Report not found' })
   async getTaskReport(@Param() params: TaskIdDto) {
+    const { reportPath } = await this.tasksService.getTask(params.taskId);
+
+    if (!reportPath) {
+      throw new NotFoundException(
+        `Report for Task ID ${params.taskId} not found. It may be pending, in progress, or has been completed successfully.`,
+      );
+    }
+
     try {
-      const { reportPath } = await this.tasksService.getTask(params.taskId);
-      if (!reportPath) {
-        throw new NotFoundException();
-      }
       await fs.promises.access(reportPath);
       const fileStream = fs.createReadStream(reportPath);
       return new StreamableFile(fileStream, {
@@ -131,7 +139,7 @@ export class TasksController {
       });
     } catch {
       throw new NotFoundException(
-        `Report for Task ID ${params.taskId} not found.`,
+        `Report for Task ID ${params.taskId} is not accessible.`,
       );
     }
   }

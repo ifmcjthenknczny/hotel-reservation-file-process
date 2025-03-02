@@ -70,7 +70,7 @@ export const formatReportErrorMessage = (
   message: string,
   rowNumber: number,
 ) => {
-  return `Problem with row ${rowNumber}: ${message}`;
+  return `Row ${rowNumber}: ${message}`;
 };
 
 export const Trim = <T>() => {

@@ -18,14 +18,14 @@ export class ReservationService {
     const { reservationId, status, ...data } = toDbReservation(reservation);
 
     const existingReservation = await this.findReservation(reservationId);
-
     const isActiveStatus = !['CANCELED', 'COMPLETED'].includes(status);
 
     if (existingReservation) {
-      await this.updateReservation(reservationId, {
+      const updateDiff = {
         status,
-        ...(isActiveStatus && { data }),
-      });
+        ...(isActiveStatus && data),
+      };
+      await this.updateReservation(reservationId, updateDiff);
     } else if (isActiveStatus) {
       await this.createReservation({ reservationId, status, ...data });
     }
@@ -42,7 +42,7 @@ export class ReservationService {
 
   private async updateReservation(
     reservationId: string,
-    updateData: Partial<DbReservation>,
+    updateData: Partial<Omit<DbReservation, 'reservationId'>>,
   ): Promise<void> {
     await this.reservationModel
       .updateOne({ reservationId }, { $set: updateData })

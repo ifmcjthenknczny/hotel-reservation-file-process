@@ -13,8 +13,21 @@ import { ReservationDto } from 'src/reservation/reservation.dto';
 import { chunkify } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
 import { formatReportErrorMessage } from 'src/helpers/validation';
+// import { Readable } from 'stream';
 
 const DB_INSERT_BATCH_SIZE = 10;
+
+// async function* readXlsxRows(filePath: string) {
+//   const stream = fs.createReadStream(filePath);
+//   const workbook = xlsx.read(stream, { type: 'buffer' });
+//   const sheetName = workbook.SheetNames[0];
+//   const sheet = workbook.Sheets[sheetName];
+
+//   const streamRows = xlsx.stream.to_json(sheet, { raw: false });
+//   for await (const row of streamRows) {
+//     yield row;
+//   }
+// }
 
 @Processor(QUEUE_NAME)
 @Injectable()
@@ -71,6 +84,7 @@ export class QueueWorker extends WorkerHost {
         }
 
         if (!errors.length) {
+          // push rows only if there were no errors in the past
           validatedJsonRows.push(reservation);
         }
       }
