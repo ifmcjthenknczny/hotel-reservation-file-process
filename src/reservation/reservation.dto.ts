@@ -5,12 +5,13 @@ import {
   ReservationStatus,
   ReservationStatusEnum,
 } from 'src/reservation/reservation.schema';
-import { Day, DAY_REGEX, IsAfter } from 'src/helpers/validation';
+import { Day, DAY_REGEX, IsAfter, Trim } from 'src/helpers/validation';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ReservationDto {
   @IsString()
   @IsNotEmpty()
+  @Trim()
   @ApiProperty({
     example: '12345',
     description: 'Unique identifier for the reservation',
@@ -19,11 +20,13 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
+  @Trim()
   @ApiProperty({ example: 'John Doe', description: 'Name of the guest' })
   guest_name: string;
 
   @IsEnum(ReservationStatusEnum)
   @IsNotEmpty()
+  @Trim()
   @ApiProperty({
     enum: ReservationStatusEnum,
     example: 'oczekująca',
@@ -40,6 +43,7 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
+  @Trim()
   @ApiProperty({
     example: '2025-03-02',
     description: 'Check-in date in YYYY-MM-DD format',
@@ -51,6 +55,7 @@ export class ReservationDto {
 
   @IsString()
   @IsNotEmpty()
+  @Trim()
   @ApiProperty({
     example: '2024-03-07',
     description: 'Check-out date in YYYY-MM-DD format',

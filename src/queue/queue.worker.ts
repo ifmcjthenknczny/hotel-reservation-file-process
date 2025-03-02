@@ -44,7 +44,7 @@ export class QueueWorker extends WorkerHost {
       const validatedJsonRows: ReservationDto[] = [];
 
       for (const [index, rowContent] of jsonRows.entries()) {
-        const rowNumber = index + 2; // numbering starts from one in Excel files, also counting header
+        const rowNumber = index + 2; // assuming header always is first row in Excel files and that numbering starts from one in Excel files
         let reservation: ReservationDto | null = null;
         try {
           reservation = plainToInstance(ReservationDto, rowContent);

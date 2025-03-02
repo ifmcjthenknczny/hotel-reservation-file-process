@@ -4,6 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export const IsAfter = (property: string, message?: string) => {
   return (object: any, propertyName: string) => {
@@ -70,4 +71,11 @@ export const formatReportErrorMessage = (
   rowNumber: number,
 ) => {
   return `Problem with row ${rowNumber}: ${message}`;
+};
+
+export const Trim = <T>() => {
+  return Transform(
+    ({ value }: { value: T }): T =>
+      typeof value === 'string' ? (value.trim() as T) : value,
+  );
 };
