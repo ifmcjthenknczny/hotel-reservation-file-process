@@ -46,3 +46,21 @@ export class FileExtensionValidator implements ValidatorConstraintInterface {
     return `Invalid file type. Only ${args.constraints.join(', ')} files are allowed.`;
   }
 }
+
+@ValidatorConstraint({ name: 'fileType', async: false })
+export class MulterFileTypeValidator implements ValidatorConstraintInterface {
+  validate(file: Express.Multer.File, args: ValidationArguments) {
+    if (!file) {
+      return false;
+    }
+    const allowedTypes = args.constraints as string[];
+
+    return Array.isArray(allowedTypes)
+      ? allowedTypes.includes(file.mimetype)
+      : false;
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return `Only files of mimetypes ${args.constraints?.join(', ') || 'specified types'} are allowed.`;
+  }
+}

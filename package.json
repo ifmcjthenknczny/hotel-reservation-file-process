@@ -1,14 +1,14 @@
 {
   "name": "smarthotel-intro-task",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "version": "1.0.0",
+  "description": "Backend for uploading and processing hotel reservation XLSX files",
+  "author": "Maciej Konieczny",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "all": "yarn format && yarn lint && yarn build && yarn start:dev",
     "build": "nest build",
-    "buildAndStart": "nest build && nest start:dev",
+    "buildAndStart": "yarn build && yarn start:dev",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

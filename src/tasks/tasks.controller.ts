@@ -27,19 +27,15 @@ export class TasksController {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    if (!file) {
-      throw new BadRequestException('File is required.');
-    }
-
     const dto = new UploadFileDto();
     dto.file = file;
-    const errors = await validate(dto, {
+    const validationErrors = await validate(dto, {
       whitelist: true,
       forbidNonWhitelisted: true,
     });
 
-    if (errors instanceof BadRequestException) {
-      throw errors;
+    if (validationErrors.length) {
+      throw new BadRequestException();
     }
     const task = await this.tasksService.createTask(file);
     return { taskId: task.taskId };

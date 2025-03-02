@@ -9,7 +9,10 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { TASK_STATUSES, TaskStatus } from 'src/tasks/tasks.schema';
-import { FileExtensionValidator } from 'src/helpers/validate';
+import {
+  FileExtensionValidator,
+  MulterFileTypeValidator,
+} from 'src/helpers/validate';
 
 export class TaskDto {
   @IsUUID()
@@ -27,12 +30,12 @@ export class TaskDto {
   @ValidateIf((task: TaskDto) => task.status === 'FAILED')
   @IsString()
   @IsNotEmpty()
-  reportPath: string;
+  reportPath?: string;
 
   @ValidateIf((task: TaskDto) => task.status === 'FAILED')
   @IsString()
   @IsNotEmpty()
-  failReason: string;
+  failReason?: string;
 
   @IsDate()
   @IsNotEmpty()
@@ -40,12 +43,15 @@ export class TaskDto {
 
   @IsDate()
   @IsOptional()
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export class UploadFileDto {
   @IsNotEmpty()
   @Validate(FileExtensionValidator, ['xlsx'])
+  @Validate(MulterFileTypeValidator, [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ])
   file: Express.Multer.File;
 }
 
