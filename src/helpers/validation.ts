@@ -6,6 +6,9 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
+export type Day = `${number}-${number}-${number}`;
+export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 export const IsAfter = <T extends Record<string, any>>(
   property: keyof T,
   message?: string,
@@ -35,8 +38,12 @@ export const IsAfter = <T extends Record<string, any>>(
   };
 };
 
-export type Day = `${number}-${number}-${number}`;
-export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+export const Trim = <T>() => {
+  return Transform(
+    ({ value }: { value: T }): T =>
+      typeof value === 'string' ? (value.trim() as T) : value,
+  );
+};
 
 @ValidatorConstraint({ name: 'fileExtension', async: false })
 export class FileExtensionValidator implements ValidatorConstraintInterface {
@@ -77,11 +84,4 @@ export const formatReportErrorMessage = (
   rowNumber: number,
 ) => {
   return `Row ${rowNumber}: ${message}`;
-};
-
-export const Trim = <T>() => {
-  return Transform(
-    ({ value }: { value: T }): T =>
-      typeof value === 'string' ? (value.trim() as T) : value,
-  );
 };

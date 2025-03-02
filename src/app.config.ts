@@ -3,6 +3,9 @@ import { plainToClass } from 'class-transformer';
 
 export class AppConfig {
   @IsString()
+  API_KEY: string;
+
+  @IsString()
   MONGO_URI: string;
 
   @IsString()

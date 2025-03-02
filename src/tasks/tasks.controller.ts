@@ -24,9 +24,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TASK_STATUSES } from './tasks.schema';
+import { Protected } from '~/helpers/swagger';
 
 @Controller('tasks')
 @ApiTags('Tasks')
+@Protected()
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 

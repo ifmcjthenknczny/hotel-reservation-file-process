@@ -33,6 +33,7 @@ services:
     environment:
       MONGO_URI: mongodb://admin:secret@mongodb:27017/mydatabase?authSource=admin
       REDIS_URI: redis://default:mysecretpassword@redis:6379
+      API_KEY: smarthotel
     command: npm run start:prod
 
 volumes:
