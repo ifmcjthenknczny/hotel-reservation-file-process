@@ -16,7 +16,7 @@ This project is a backend application built with NestJS, designed to process hot
 
 1. Make sure you have already:
 - Docker and Docker Compose installed on your machine.
-- Yarn installed.
+- Yarn installed on your machine.
 
 2. Clone the Repository:
 ```bash
@@ -25,13 +25,13 @@ cd hotel-reservation-file-process
 ```
 
 3. Build and Start the Containers:
-Run the following command to start the application and MongoDB in Docker containers:
+Run the following command to start the application with required infractructure (MongoDB and Redis) locally in Docker containers:
 
 ```bash
 docker-compose up --build -d
 ```
 
-This will build the project and run it in detached mode. The MongoDB and Redis (required for BullMq) databases will be available locally, and the app will be available at `http://localhost:3000`.
+This will build the project and run it in detached mode. The app will be available at `http://localhost:3000`.
 
 ## API
 
@@ -43,7 +43,8 @@ The API is documented and accessible via Swagger at `http://localhost:3000/api`.
 
 - **GET /ping**: Checks if server is available.
 <details>
-<summary>Curl:</summary>
+<summary>Click for curl</summary>
+
 ```bash
 curl --request GET \
   --url http://localhost:3000/ping
@@ -52,7 +53,8 @@ curl --request GET \
 
 - **POST /tasks/upload:** Upload an XLSX file with reservations.
 <details>
-<summary>Curl:</summary>
+<summary>Click for curl</summary>
+
 ```bash
 curl --request POST \
   --url http://localhost:3000/tasks/upload \
@@ -66,7 +68,8 @@ Use it to upload an XLSX file containing reservations. Make sure the file contai
 
 - **GET /tasks/status/:taskId:** Get the status of a task.
 <details>
-<summary>Curl:</summary>
+<summary>Click for curl</summary>
+
 ```bash
 curl --request GET \
   --url http://localhost:3000/tasks/status/<taskId> \
@@ -78,7 +81,8 @@ You can check the status of a task, where taskId is the ID returned from the fil
 
 - **GET /tasks/report/:taskId:** Download the error report in .txt file, if there were invalid records during processing.
 <details>
-<summary>Curl:</summary>
+<summary>Click for curl</summary>
+
 ```bash
 curl --request GET \
   --url http://localhost:3000/tasks/report/<taskId> \
@@ -91,14 +95,16 @@ curl --request GET \
 All endpoints are secured and require the x-api-key header for access. The valid API key is:
 
 <details>
-<summary>Show API key:</summary>
+<summary>Reveal secret</summary>
+
 ```smarthotel```
 </details>
 
 Add the API key to your request headers like this:
 
 <details>
-<summary>Show header</summary>
+<summary>Reveal secret</summary>
+
 ```x-api-key: smarthotel```
 </details>
 
