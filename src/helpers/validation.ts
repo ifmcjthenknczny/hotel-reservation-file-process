@@ -11,7 +11,7 @@ export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 export const IsAfter = <T extends Record<string, any>>(
   property: keyof T,
-  message?: string,
+  { message }: { message?: string } = {},
 ) => {
   return (object: T, propertyName: string) => {
     registerDecorator({

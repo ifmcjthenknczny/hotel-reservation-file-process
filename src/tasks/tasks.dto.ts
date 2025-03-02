@@ -87,16 +87,32 @@ export class UploadFileDto {
     format: 'binary',
     description: 'Excel file to upload (.xlsx only) with "file" keyname',
   })
-  @IsNotEmpty()
-  @Validate(FileExtensionValidator, ['xlsx'])
-  @Validate(MulterFileTypeValidator, [
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ])
+  @IsNotEmpty({
+    message:
+      'file should not be empty. Please provide an .xlsx file to upload.',
+  })
+  @Validate(FileExtensionValidator, ['xlsx'], {
+    message:
+      'Invalid file extension. Only .xlsx files are allowed. Please upload a valid Excel file.',
+  })
+  @Validate(
+    MulterFileTypeValidator,
+    ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+    {
+      message:
+        'Invalid file type. Only .xlsx files with correct MIME type are allowed. Please provide a valid file.',
+    },
+  )
   file: Express.Multer.File;
 }
 
 export class TaskIdDto {
   @ApiProperty({ example: EXAMPLE_UUID, description: 'Task ID' })
-  @IsUUID()
+  @IsUUID(
+    {},
+    {
+      message: 'taskId should be a valid UUID. Please provide a correct UUID.',
+    },
+  )
   taskId: string;
 }

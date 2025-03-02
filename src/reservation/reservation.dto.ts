@@ -9,24 +9,41 @@ import { Day, DAY_REGEX, IsAfter, Trim } from 'src/helpers/validation';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ReservationDto {
-  @IsString()
-  @IsNotEmpty()
   @Trim()
+  @IsString({
+    message:
+      'reservation_id must be a string. Ensure that reservation_id is a valid string.',
+  })
+  @IsNotEmpty({
+    message:
+      'reservation_id should not be empty. Please provide a valid reservation ID.',
+  })
   @ApiProperty({
     example: '12345',
     description: 'Unique identifier for the reservation',
   })
   reservation_id: string;
 
-  @IsString()
-  @IsNotEmpty()
   @Trim()
+  @IsString({
+    message:
+      'guest_name must be a string. Please provide a valid name for the guest.',
+  })
+  @IsNotEmpty({
+    message:
+      'guest_name should not be empty. Please provide the name of the guest.',
+  })
   @ApiProperty({ example: 'John Doe', description: 'Name of the guest' })
   guest_name: string;
 
-  @IsEnum(ReservationStatusEnum)
-  @IsNotEmpty()
   @Trim()
+  @IsEnum(ReservationStatusEnum, {
+    message: `status should be one of the following valid reservation statuses: ${Object.keys(ReservationStatusEnum).join(', ')}.`,
+  })
+  @IsNotEmpty({
+    message:
+      'status should not be empty. Please provide a valid reservation status.',
+  })
   @ApiProperty({
     enum: ReservationStatusEnum,
     example: 'oczekująca',
@@ -47,28 +64,45 @@ export class ReservationDto {
   })
   status: ReservationStatus;
 
-  @IsString()
-  @IsNotEmpty()
   @Trim()
+  @IsString({
+    message:
+      'check_in_date must be a string. Please provide a valid check-in date in string format.',
+  })
+  @IsNotEmpty({
+    message:
+      'check_in_date should not be empty. Please provide a valid check-in date.',
+  })
   @ApiProperty({
     example: '2025-03-02',
     description: 'Check-in date in YYYY-MM-DD format',
   })
   @Matches(DAY_REGEX, {
-    message: 'check_in_date must be in YYYY-MM-DD format',
+    message:
+      'check_in_date must be in YYYY-MM-DD format. Please provide the date in this format.',
   })
   check_in_date: Day;
 
-  @IsString()
-  @IsNotEmpty()
   @Trim()
+  @IsString({
+    message:
+      'check_out_date must be a string. Please provide a valid check-out date in string format.',
+  })
+  @IsNotEmpty({
+    message:
+      'check_out_date should not be empty. Please provide a valid check-out date.',
+  })
   @ApiProperty({
     example: '2024-03-07',
     description: 'Check-out date in YYYY-MM-DD format',
   })
   @Matches(DAY_REGEX, {
-    message: 'check_out_date must be in YYYY-MM-DD format',
+    message:
+      'check_out_date must be in YYYY-MM-DD format. Please provide the date in this format.',
   })
-  @IsAfter('check_in_date')
+  @IsAfter('check_in_date', {
+    message:
+      'check_out_date must be after check_in_date. Please provide a valid check-out date.',
+  })
   check_out_date: Day;
 }
