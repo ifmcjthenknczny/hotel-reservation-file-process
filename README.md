@@ -119,6 +119,7 @@ Add the API key to your request headers like this:
 - **Validation:** Reservations are only added if file in whole pass validation. Invalid records are logged, and a report is generated.
 
 - **Batch Upsert:** Valid reservations are processed into the database in batches. 
+
 *Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only the status will be updated.*
 
 - **Error Report:** If errors are encountered during file processing, a .txt report is generated. This can be downloaded from the endpoint `/tasks/report/:taskId`.
