@@ -109,7 +109,8 @@ export class UploadFileDto {
 export class TaskIdDto {
   @ApiProperty({ example: EXAMPLE_UUID, description: 'Task ID' })
   @IsUUID('4', {
-    message: 'taskId should be a valid UUID. Please provide a correct UUID.',
+    message:
+      'taskId should be a valid UUID. Please provide a correct UUID of version 4.',
   })
   taskId: string;
 }
