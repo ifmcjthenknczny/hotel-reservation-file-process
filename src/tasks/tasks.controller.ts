@@ -58,7 +58,7 @@ export class TasksController {
       await fs.promises.access(reportPath);
       const fileStream = fs.createReadStream(reportPath);
       return new StreamableFile(fileStream, {
-        disposition: `attachment; filename="${params.taskId}.txt"`,
+        disposition: `attachment; filename="${params.taskId}_report.txt"`,
         type: 'text/plain',
       });
     } catch {
