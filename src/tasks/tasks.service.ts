@@ -24,10 +24,11 @@ export class TasksService {
     const targetDir = path.join(process.cwd(), RESERVATIONS_DATA_DIRECTORY);
     const filePath = path.join(targetDir, `${taskId}.xlsx`);
 
-    if (!fs.existsSync(targetDir)) {
+    try {
+      await fs.promises.access(targetDir);
+    } catch {
       await fs.promises.mkdir(targetDir, { recursive: true });
     }
-
     await fs.promises.writeFile(filePath, file.buffer);
 
     const task = new this.taskModel({
@@ -72,10 +73,16 @@ export class TasksService {
     try {
       const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
       const filePath = path.join(reportsDir, `${taskId}.txt`);
-      if (!fs.existsSync(reportsDir)) {
+
+      try {
+        await fs.promises.access(reportsDir);
+      } catch {
         await fs.promises.mkdir(reportsDir, { recursive: true });
       }
-      const content = validationErrors.join('\n');
+
+      const content = ['VALIDATION ERRORS SUMMARY', ...validationErrors].join(
+        '\n',
+      );
       await fs.promises.writeFile(filePath, content, 'utf-8');
       this.logger.log(`Report saved: ${filePath}`);
       return filePath;

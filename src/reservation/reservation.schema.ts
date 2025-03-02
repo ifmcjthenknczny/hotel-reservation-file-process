@@ -18,6 +18,8 @@ export type DbReservation = {
   status: ReservationStatus;
   checkInDate: Day;
   checkOutDate: Day;
+  createdAt: Date;
+  updatedAt?: Date;
 };
 
 @Schema({ timestamps: true })
@@ -48,11 +50,19 @@ export class Reservation extends Document {
     },
   })
   checkOutDate: Day;
+
+  @Prop({
+    required: true,
+  })
+  createdAt: Date;
+
+  @Prop()
+  updatedAt?: Date;
 }
 
 export const toDbReservation = (
   fileReservation: ReservationDto,
-): DbReservation => {
+): Omit<DbReservation, 'createdAt' | 'updatedAt'> => {
   return {
     reservationId: fileReservation.reservation_id,
     guestName: fileReservation.guest_name,
