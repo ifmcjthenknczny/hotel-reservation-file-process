@@ -137,5 +137,5 @@ export const formatReportDuplicationReportMessage = (
   duplicateIndexes: number[],
   fieldName: string,
 ) => {
-  return `Field ${fieldName} of value ${duplicatedValue} must be unique, but it is referenced multiple times in file in rows number: ${duplicateIndexes.map((index) => index + 1).join(', ')}.`;
+  return `Field ${fieldName} with value ${duplicatedValue} must be unique but appears multiple times in the file at rows: ${duplicateIndexes.map((index) => index + 1).join(', ')}. Please ensure that each value in this field is unique before uploading the file.`;
 };
