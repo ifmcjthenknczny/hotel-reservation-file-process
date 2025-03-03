@@ -69,11 +69,11 @@ export class ReservationDto {
   @Trim()
   @IsString({
     message:
-      'check_in_date must be a string. Please provide a valid check-in date in string format.',
+      'check_in_date must be a string. Please provide a valid check_in_date in string format.',
   })
   @IsNotEmpty({
     message:
-      'check_in_date should not be empty. Please provide a valid check-in date.',
+      'check_in_date should not be empty. Please provide a valid check_in_date.',
   })
   @ApiProperty({
     example: '2025-03-02',
@@ -88,15 +88,15 @@ export class ReservationDto {
   @Trim()
   @IsString({
     message:
-      'check_out_date must be a string. Please provide a valid check-out date in string format.',
+      'check_out_date must be a string. Please provide a valid check_out_date in string format.',
   })
   @IsNotEmpty({
     message:
-      'check_out_date should not be empty. Please provide a valid check-out date.',
+      'check_out_date should not be empty. Please provide a valid check_out_date.',
   })
   @ApiProperty({
     example: '2024-03-07',
-    description: 'Check-out date in YYYY-MM-DD format',
+    description: 'Checkout date in YYYY-MM-DD format',
   })
   @Matches(DAY_REGEX, {
     message:
@@ -104,7 +104,7 @@ export class ReservationDto {
   })
   @IsAfter('check_in_date', {
     message:
-      'check_out_date must be after check_in_date. Please provide a valid check-out date.',
+      'check_out_date must be after check_in_date. Please provide a valid check_out_date.',
   })
   check_out_date: Day;
 }
