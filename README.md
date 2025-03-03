@@ -1,6 +1,17 @@
-# Backend Developer Task - Smart Hotel Reservations
+# Backend Developer Task - Hotel Reservations
 
 This project is a backend application built with NestJS, designed to process hotel reservation files in XLSX format and manage asynchronous tasks in a queue. It utilizes MongoDB to store task and reservation data, processes files asynchronously using BullMQ, and provides an API for interaction.
+
+## Table of contents
+* [Features](#features)
+* [Setup and Installation](#setup-and-installation)
+* [API](#api)
+  + [Swagger](#swagger)
+  + [Endpoints overview](#endpoints-overview)
+  + [API Key Authentication](#api-key-authentication)
+* [Task Processing Logic](#task-processing-logic)
+* [Notes](#notes)
+* [Author](#author)
 
 ## Features
 
@@ -117,13 +128,13 @@ Add the API key to your request headers like this:
 - **Task Status:** The task status can be queried via `/tasks/status/:taskId` endpoint.
 
 - **XLSX workbook:** Only the first sheet of the XLSX file is processed. Also, it stops when encounters an empty row and has to be of proper structure (the program is capable of handling different header order):
-![table structure](https://github.com/ifmcjthenknczny/hotel-reservation-file-process/screenshots/xlsx_structure.jpg?raw=true)
+![table structure](screenshots/xlsx_structure.jpg)
 
 - **Validation:** Reservations are only added if file in whole pass validation. Invalid records are logged, and a report is generated.
 
 - **Batch Upsert:** Valid reservations are processed into the database in batches. 
 
-*Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only the status will be updated.*
+> *Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only the status will be updated.*
 
 - **Error Report:** If errors are encountered during file processing, a .txt report is generated. This can be downloaded from the endpoint `/tasks/report/:taskId`.
 
