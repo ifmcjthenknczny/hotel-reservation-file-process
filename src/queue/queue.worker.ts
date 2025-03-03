@@ -13,9 +13,12 @@ import {
   RESERVATION_PROPERTIES,
   ReservationDto,
 } from 'src/reservation/reservation.dto';
-import { chunkify } from 'src/helpers/array';
+import { chunkify, findDuplicateValueIndexes } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
-import { formatReportErrorMessage } from 'src/helpers/validation';
+import {
+  formatReportDuplicationReportMessage,
+  formatReportValidationErrorMessage,
+} from 'src/helpers/validation';
 import { areSetsEqual, mergeHeadersWithValues } from '~/helpers/object';
 
 const DB_PROCESS_BATCH_SIZE = 10;
@@ -75,6 +78,25 @@ export class QueueWorker extends WorkerHost {
         await this.validateRow(rowJson, rowNumber, errors, validatedJsonRows);
       }
 
+      if (validatedJsonRows.length) {
+        // only checked when there are no validation errors before
+        const uniqueFieldName: keyof ReservationDto = 'reservation_id';
+        const duplicates = findDuplicateValueIndexes(
+          validatedJsonRows.map((row) => row[uniqueFieldName]),
+        );
+        if (Object.keys(duplicates).length) {
+          const duplicationErrors = Object.keys(duplicates).map(
+            (duplicatedValue) =>
+              formatReportDuplicationReportMessage(
+                duplicatedValue,
+                duplicates[duplicatedValue],
+                uniqueFieldName,
+              ),
+          );
+          errors.push(...duplicationErrors);
+        }
+      }
+
       if (errors.length) {
         await this.saveValidationErrorReport(taskId, errors);
         return;
@@ -91,7 +113,7 @@ export class QueueWorker extends WorkerHost {
         status: 'FAILED',
         failReason: errorMessage,
       });
-      this.logger.error(`Error while processing ${taskId}:`, errorMessage);
+      this.logger.error(`Error while processing task ${taskId}:`, errorMessage);
     }
   }
 
@@ -127,8 +149,9 @@ export class QueueWorker extends WorkerHost {
   }
 
   async loadFirstWorksheet(filePath: string) {
-    const buffer = await fs.promises.readFile(filePath);
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    const workbook = xlsx.read(await fs.promises.readFile(filePath), {
+      type: 'buffer',
+    });
     const sheetName = workbook.SheetNames[0];
     return workbook.Sheets[sheetName];
   }
@@ -146,7 +169,7 @@ export class QueueWorker extends WorkerHost {
       if (validationErrors.length) {
         errors.push(
           ...validationErrors.map((error) =>
-            formatReportErrorMessage(
+            formatReportValidationErrorMessage(
               Object.values(error.constraints || {}).join(', ') ||
                 `Unidentified problem with column ${error.property}`,
               rowNumber,
@@ -164,7 +187,7 @@ export class QueueWorker extends WorkerHost {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unidentified error';
-      errors.push(formatReportErrorMessage(errorMessage, rowNumber));
+      errors.push(formatReportValidationErrorMessage(errorMessage, rowNumber));
     }
   }
 
@@ -174,7 +197,9 @@ export class QueueWorker extends WorkerHost {
       status: 'FAILED',
       reportPath,
     });
-    this.logger.error(`Validation errors occurred while processing ${taskId}`);
+    this.logger.error(
+      `Validation errors occurred while processing task ${taskId}`,
+    );
   }
 
   async saveReservationToDb(validatedJsonRows: ReservationDto[]) {

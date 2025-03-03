@@ -127,16 +127,22 @@ Add the API key to your request headers like this:
 
 - **Task Status:** The task status can be queried via `/tasks/status/:taskId` endpoint.
 
-- **XLSX workbook:** Only the first sheet of the XLSX file is processed. Also, it stops when encounters an empty row and has to be of proper structure (the program is capable of handling different header order):
+- **XLSX workbook:** Only the first sheet of the XLSX file is processed. Also, it stops when encounters an empty row and the sheet has to be of proper structure (the program is capable of handling different header order):
 ![table structure](screenshots/xlsx_structure.jpg)
 
 - **Validation:** Reservations are only added if file in whole pass validation. Invalid records are logged, and a report is generated.
 
-- **Batch Upsert:** Valid reservations are processed into the database in batches. 
+- **Batch Upsert:** Reservations are processed into the database in batches, ensuring reduced database load.
 
-> *Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only the status will be updated.*
+- **Upsert Logic:** App processes validated reservation data according to the following rules:
+  If the reservation has a status of "CANCELED" or "COMPLETED":
+    - If it exists in the database → update its status.
+    - If it does not exist in the database → do not add it.
+  Otherwise → add or update the reservation in the database.
 
-- **Error Report:** If errors are encountered during file processing, a .txt report is generated. This can be downloaded from the endpoint `/tasks/report/:taskId`.
+> *Note: If an upcoming update for existing reservation has a status of "PENDING", it will be updated as a whole. Otherwise, only its status will be updated.*
+
+- **Error Report:** If errors are encountered during file processing, a .txt report is generated. It contains row number of validation error occurence, type of error and suggestion for file improvement. It can be downloaded from the endpoint `/tasks/report/:taskId`.
 
 ## Notes
 

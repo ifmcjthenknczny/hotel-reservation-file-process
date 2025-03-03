@@ -95,13 +95,6 @@ export class FileSizeValidator implements ValidatorConstraintInterface {
   }
 }
 
-export const formatReportErrorMessage = (
-  message: string,
-  rowNumber: number,
-) => {
-  return `Row ${rowNumber}: ${message}`;
-};
-
 export function Protected() {
   return applyDecorators(
     ApiHeader({
@@ -131,3 +124,18 @@ export function Protected() {
     }),
   );
 }
+
+export const formatReportValidationErrorMessage = (
+  message: string,
+  rowNumber: number,
+) => {
+  return `Row ${rowNumber}: ${message}`;
+};
+
+export const formatReportDuplicationReportMessage = (
+  duplicatedValue: string,
+  duplicateIndexes: number[],
+  fieldName: string,
+) => {
+  return `Field ${fieldName} of value ${duplicatedValue} must be unique, but it is referenced multiple times in file in rows number: ${duplicateIndexes.map((index) => index + 1).join(', ')}.`;
+};
