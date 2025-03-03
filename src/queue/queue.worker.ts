@@ -9,12 +9,18 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { ReservationService } from 'src/reservation/reservation.service';
 import { TasksService } from 'src/tasks/tasks.service';
-import { ReservationDto } from 'src/reservation/reservation.dto';
+import {
+  RESERVATION_PROPERTIES,
+  ReservationDto,
+} from 'src/reservation/reservation.dto';
 import { chunkify } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
 import { formatReportErrorMessage } from 'src/helpers/validation';
+import { areSetsEqual, mergeHeadersWithValues } from '~/helpers/object';
 
 const DB_PROCESS_BATCH_SIZE = 10;
+const XLSX_COLUMN_RANGE = RESERVATION_PROPERTIES.length;
+const MAX_XLSX_ROWS = 1_048_576;
 
 @Processor(QUEUE_NAME)
 @Injectable()
@@ -34,15 +40,47 @@ export class QueueWorker extends WorkerHost {
       this.logger.log(`Processing file: ${filePath}`);
       await this.tasksService.updateTask(taskId, { status: 'IN_PROGRESS' });
 
-      const jsonRows = await this.loadFileRows<ReservationDto>(filePath);
-      const { validatedJsonRows, errors } = await this.validateFile(jsonRows);
+      const worksheet = await this.loadFirstWorksheet(filePath);
+
+      const header = this.readHeaderArray(worksheet);
+      const validatedJsonRows: ReservationDto[] = [];
+      const errors: string[] = [];
+
+      const maxRowNumber =
+        xlsx.utils.decode_range(worksheet['!ref'] || '').e.r ?? MAX_XLSX_ROWS;
+
+      if (!maxRowNumber || maxRowNumber === 1) {
+        throw new Error(
+          'The xlsx file that is being processed does not have any data.',
+        );
+      }
+
+      for (let rowNumber = 2; rowNumber < maxRowNumber; rowNumber++) {
+        const rowIndex = rowNumber - 1;
+
+        const rowJson = this.readJsonRow<ReservationDto>(
+          worksheet,
+          rowIndex,
+          header,
+        );
+
+        if (
+          Object.values(rowJson).every(
+            (rowValue) => rowValue === null || rowValue === undefined,
+          )
+        ) {
+          break;
+        }
+
+        await this.validateRow(rowJson, rowNumber, errors, validatedJsonRows);
+      }
 
       if (errors.length) {
         await this.saveValidationErrorReport(taskId, errors);
         return;
       }
 
-      await this.saveToDb(validatedJsonRows);
+      await this.saveReservationToDb(validatedJsonRows);
 
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
@@ -57,52 +95,77 @@ export class QueueWorker extends WorkerHost {
     }
   }
 
-  async loadFileRows<T>(filePath: string): Promise<T[]> {
+  readRow(worksheet: xlsx.WorkSheet, rowIndex: number): (string | null)[] {
+    const rowData: (string | null)[] = [];
+    for (let col = 0; col < XLSX_COLUMN_RANGE; col++) {
+      const cellAddress = xlsx.utils.encode_cell({ r: rowIndex, c: col });
+      rowData.push((worksheet[cellAddress] as { w?: string })?.w ?? null);
+    }
+    return rowData;
+  }
+
+  readHeaderArray(worksheet: xlsx.WorkSheet) {
+    const headers = this.readRow(worksheet, 0);
+    const expectedHeaders = new Set(RESERVATION_PROPERTIES);
+    const actualHeadersSet = new Set(headers);
+
+    if (!areSetsEqual(actualHeadersSet, expectedHeaders)) {
+      throw new Error(
+        `Invalid headers. Expected: ${[...expectedHeaders].join(', ')}, Found: ${[...actualHeadersSet].join(', ')}`,
+      );
+    }
+    return headers as (keyof ReservationDto)[];
+  }
+
+  readJsonRow<T>(
+    worksheet: xlsx.WorkSheet,
+    rowIndex: number,
+    header: string[],
+  ): T {
+    const rowValues = this.readRow(worksheet, rowIndex);
+    return mergeHeadersWithValues(header, rowValues) as T;
+  }
+
+  async loadFirstWorksheet(filePath: string) {
     const buffer = await fs.promises.readFile(filePath);
     const workbook = xlsx.read(buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
-    const jsonRows = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], {
-      raw: false,
-    });
-    return jsonRows as T[];
+    return workbook.Sheets[sheetName];
   }
 
-  async validateFile(jsonRows: ReservationDto[]) {
-    const errors: string[] = [];
-    let validatedJsonRows: ReservationDto[] = [];
+  async validateRow(
+    rowContent: ReservationDto,
+    rowNumber: number,
+    errors: string[],
+    validatedJsonRows: ReservationDto[],
+  ) {
+    try {
+      const reservation = plainToInstance(ReservationDto, rowContent);
+      const validationErrors = await validate(reservation);
 
-    for (const [index, rowContent] of jsonRows.entries()) {
-      const rowNumber = index + 2; // Excel row starts from 1, header is row 1
-      try {
-        const reservation = plainToInstance(ReservationDto, rowContent);
-        const validationErrors = await validate(reservation);
-
-        if (validationErrors.length) {
-          errors.push(
-            ...validationErrors.map((error) =>
-              formatReportErrorMessage(
-                Object.values(error.constraints || {}).join(', ') ||
-                  `Unidentified problem with column ${error.property}`,
-                rowNumber,
-              ),
+      if (validationErrors.length) {
+        errors.push(
+          ...validationErrors.map((error) =>
+            formatReportErrorMessage(
+              Object.values(error.constraints || {}).join(', ') ||
+                `Unidentified problem with column ${error.property}`,
+              rowNumber,
             ),
-          );
-          continue;
-        }
-
-        if (!errors.length) {
-          // push rows only if there is a possibility to return them in the future
-          validatedJsonRows.push(reservation);
-        } else {
-          validatedJsonRows = [];
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unidentified error';
-        errors.push(formatReportErrorMessage(errorMessage, rowNumber));
+          ),
+        );
       }
+
+      if (!errors.length) {
+        // push rows only if there is a possibility to return them in the future
+        validatedJsonRows.push(reservation);
+      } else {
+        validatedJsonRows = [];
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unidentified error';
+      errors.push(formatReportErrorMessage(errorMessage, rowNumber));
     }
-    return { errors, validatedJsonRows };
   }
 
   async saveValidationErrorReport(taskId: string, errors: string[]) {
@@ -114,7 +177,7 @@ export class QueueWorker extends WorkerHost {
     this.logger.error(`Validation errors occurred while processing ${taskId}`);
   }
 
-  async saveToDb(validatedJsonRows: ReservationDto[]) {
+  async saveReservationToDb(validatedJsonRows: ReservationDto[]) {
     const dbJobsChunks = chunkify(
       validatedJsonRows.map((reservation) =>
         this.reservationService.processReservation(reservation),

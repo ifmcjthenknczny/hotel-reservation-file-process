@@ -8,6 +8,16 @@ import {
 import { Day, DAY_REGEX, IsAfter, Trim } from 'src/helpers/validation';
 import { ApiProperty } from '@nestjs/swagger';
 
+// TODO: create property decorator instead
+// https://stackoverflow.com/questions/75057430/how-to-list-properties-of-a-nestjs-dto-class
+export const RESERVATION_PROPERTIES = [
+  'reservation_id',
+  'guest_name',
+  'status',
+  'check_in_date',
+  'check_out_date',
+];
+
 export class ReservationDto {
   @Trim()
   @IsString({
