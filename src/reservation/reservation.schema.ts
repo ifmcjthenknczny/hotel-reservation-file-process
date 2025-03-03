@@ -51,9 +51,7 @@ export class Reservation extends Document {
   })
   checkOutDate: Day;
 
-  @Prop({
-    required: true,
-  })
+  @Prop()
   createdAt: Date;
 
   @Prop()
