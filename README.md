@@ -135,10 +135,6 @@ Add the API key to your request headers like this:
 
 - **Data Storage:** The error reports and XLSX files are also stored locally, inside the container.
 
-## Conclusion
-
-This application provides a robust backend solution for managing hotel reservations via file uploads, including validation, task queue management, and error reporting. By following the instructions above, you can easily run the application locally using Docker.
-
 ## Author
 
 [Maciej Konieczny](https://github.com/ifmcjthenknczny)
