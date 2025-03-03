@@ -11,7 +11,8 @@ import {
 import { TASK_STATUSES, TaskStatus } from 'src/tasks/tasks.schema';
 import {
   FileExtensionValidator,
-  MulterFileTypeValidator,
+  FileSizeValidator,
+  FileTypeValidator,
 } from 'src/helpers/validation';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -95,8 +96,9 @@ export class UploadFileDto {
     message:
       'Invalid file extension. Only .xlsx files are allowed. Please upload a valid Excel file.',
   })
+  @Validate(FileSizeValidator)
   @Validate(
-    MulterFileTypeValidator,
+    FileTypeValidator,
     ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
     {
       message:

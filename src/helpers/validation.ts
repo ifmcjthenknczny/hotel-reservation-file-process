@@ -5,6 +5,11 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { applyDecorators } from '@nestjs/common';
+import { ApiHeader } from '@nestjs/swagger';
+import { ApiKeyGuard } from '~/guards/api-key.guard';
+import { UseGuards } from '@nestjs/common';
+import { ApiResponse } from '@nestjs/swagger';
 
 export type Day = `${number}-${number}-${number}`;
 export const DAY_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,7 +67,7 @@ export class FileExtensionValidator implements ValidatorConstraintInterface {
 }
 
 @ValidatorConstraint({ name: 'fileType', async: false })
-export class MulterFileTypeValidator implements ValidatorConstraintInterface {
+export class FileTypeValidator implements ValidatorConstraintInterface {
   validate(file: Express.Multer.File, args: ValidationArguments) {
     if (!file) {
       return false;
@@ -79,9 +84,50 @@ export class MulterFileTypeValidator implements ValidatorConstraintInterface {
   }
 }
 
+@ValidatorConstraint({ name: 'fileNotEmpty', async: false })
+export class FileSizeValidator implements ValidatorConstraintInterface {
+  validate(file: Express.Multer.File) {
+    return !!file && file.size > 0;
+  }
+
+  defaultMessage() {
+    return 'Uploaded file cannot be empty. Please provide a file with some data.';
+  }
+}
+
 export const formatReportErrorMessage = (
   message: string,
   rowNumber: number,
 ) => {
   return `Row ${rowNumber}: ${message}`;
 };
+
+export function Protected() {
+  return applyDecorators(
+    ApiHeader({
+      name: 'x-api-key',
+      description: 'API key to authorize the request',
+      required: true,
+    }),
+    UseGuards(ApiKeyGuard),
+    ApiResponse({
+      status: 403,
+      description: 'Invalid API key',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string',
+                example: 'Forbidden: Invalid API key',
+              },
+              error: { type: 'string', example: 'Forbidden' },
+              statusCode: { type: 'number', example: 403 },
+            },
+          },
+        },
+      },
+    }),
+  );
+}

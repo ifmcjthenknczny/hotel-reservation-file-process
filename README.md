@@ -10,7 +10,9 @@ This project is a backend application built with NestJS, designed to process hot
 
 - **Error Reporting:** Generates a report for invalid records, available as a .txt file.
 
-- **Task Management:** Supports asynchronous task processing and status updates with BullMq queue.
+- **Task Management:** Supports asynchronous task processing and status updates with BullMQ queue.
+
+Unfortunatelly, streaming XLSX file is [virtually impossible](https://docs.sheetjs.com/docs/solutions/input/#example-readable-streams). Data handling was conducted by reading the entire file into a buffer and then parsing it using `xlsx.read`.
 
 ## Setup and Installation
 
@@ -110,11 +112,12 @@ Add the API key to your request headers like this:
 
 ## Task Processing Logic
 
-- **Queuing:** After the upload, the task related to the uploaded file is queued in BullMq for processing.
+- **Queuing:** After the upload, the task related to the uploaded file is queued in BullMQ for processing.
 
 - **Task Status:** The task status can be queried via `/tasks/status/:taskId` endpoint.
 
-- **XLSX workbook:** Only the first sheet of the XLSX file is processed.
+- **XLSX workbook:** Only the first sheet of the XLSX file is processed. Proper structure for data:
+![table structure](https://github.com/ifmcjthenknczny/hotel-reservation-file-process/screenshots/xlsx_structure.jpg?raw=true)
 
 - **Validation:** Reservations are only added if file in whole pass validation. Invalid records are logged, and a report is generated.
 
