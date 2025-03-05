@@ -150,7 +150,7 @@ Add the API key to your request headers like this:
 
 - **Date Validation:** There is no restriction on the reservation date being in the past due to simplifications for testing purposes.
 
-- **Data Storage:** The error reports and XLSX files are also stored locally, inside the container.
+- **Data Storage:** For simplification, error reports and uploaded XLSX files are stored locally, inside the container, under `data/reports` and `data/reservations` directories respectively. In production, they should be stored on some bucket, to avoid overflowing the Docker container's storage.
 
 ## Author
 
