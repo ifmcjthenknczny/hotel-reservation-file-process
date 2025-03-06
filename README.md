@@ -158,6 +158,8 @@ Add the API key to your request headers like this:
 
 - **Memory Optimization:** The app is optimized for memory efficiency rather than performance. Since streaming the XLSX file is not possible and whole worksheet must be kept in memory, the implementation at least minimizes memory usage and the amount of data stored in variables during processing, including second loop for upserting validated data in database.
 
+- **Duplication Validation:** Due to the chosen method of duplicate validation (focusing on memory optimization), the first row containing a duplicate value is not marked as a duplicate in the report. Only subsequent occurrences of the same value are considered duplicates.
+
 ## Author
 
 [Maciej Konieczny](https://github.com/ifmcjthenknczny)

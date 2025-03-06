@@ -10,5 +10,5 @@ export const formatReportDuplicationReportMessage = (
   uniqueFieldName: string,
   rowNumber: number,
 ) => {
-  return `Row ${rowNumber}: Field ${uniqueFieldName} with value ${duplicatedValue} must be unique but appears multiple times in the file. Ensure that each value in the field ${uniqueFieldName} is unique before uploading the file.`;
+  return `Row ${rowNumber}: Field ${uniqueFieldName} with value "${duplicatedValue}" must be unique but appears multiple times in the file. Ensure that each value in the field ${uniqueFieldName} is unique before uploading the file.`;
 };

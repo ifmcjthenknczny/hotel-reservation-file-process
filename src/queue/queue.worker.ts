@@ -36,7 +36,7 @@ export class QueueWorker extends WorkerHost {
 
   async process(job: Job<Task>): Promise<void> {
     const { filePath, taskId } = job.data;
-    let validationSuccessful = true;
+    let fileValidationSuccessful = true;
 
     try {
       this.logger.log(`Processing file: ${filePath}`);
@@ -67,14 +67,15 @@ export class QueueWorker extends WorkerHost {
             rowNumber,
             reservationIds,
           );
+
           if (!isValid) {
-            validationSuccessful = false;
+            fileValidationSuccessful = false;
           }
         },
         { maxRowNumber, header },
       );
 
-      if (!validationSuccessful) {
+      if (!fileValidationSuccessful) {
         await this.failTask(
           taskId,
           `Task ${taskId} failed, due to validation errors.`,
@@ -216,9 +217,9 @@ export class QueueWorker extends WorkerHost {
           taskId,
           errorsContent.join('\n'),
         );
-        return true;
+        return false;
       }
-      return false;
+      return true;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unidentified error';
@@ -226,6 +227,7 @@ export class QueueWorker extends WorkerHost {
         taskId,
         formatReportValidationErrorMessage(errorMessage, rowNumber),
       );
+      return false;
     }
   }
 
