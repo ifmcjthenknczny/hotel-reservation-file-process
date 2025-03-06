@@ -86,7 +86,7 @@ export class TasksService {
         await fs.promises.mkdir(reportsDir, { recursive: true });
         await fs.promises.writeFile(
           filePath,
-          'VALIDATION ERRORS SUMMARY\n',
+          'TASK PROCESSING ERROR SUMMARY\n',
           'utf-8',
         );
         this.logger.log(`Report created: ${filePath}`);
@@ -96,7 +96,12 @@ export class TasksService {
 
       return filePath;
     } catch (error: any) {
-      this.logger.error(`Error saving to report file for ${taskId}:`, error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Error saving to report file for ${taskId}:`,
+        errorMessage,
+      );
     }
   }
 }

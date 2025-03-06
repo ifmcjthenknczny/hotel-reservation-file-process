@@ -56,6 +56,7 @@ export class QueueWorker extends WorkerHost {
         await this.tasksService.updateTask(taskId, {
           status: 'FAILED',
           failReason,
+          reportPath: this.tasksService.getReportPath(taskId),
         });
         return;
       }
@@ -82,6 +83,7 @@ export class QueueWorker extends WorkerHost {
         await this.tasksService.updateTask(taskId, {
           status: 'FAILED',
           failReason,
+          reportPath: this.tasksService.getReportPath(taskId),
         });
         return;
       }
@@ -106,6 +108,7 @@ export class QueueWorker extends WorkerHost {
       await this.tasksService.updateTask(taskId, {
         status: 'FAILED',
         failReason: errorMessage,
+        reportPath: this.tasksService.getReportPath(taskId),
       });
       this.logger.error(`Error while processing task ${taskId}:`, errorMessage);
     } finally {
@@ -243,7 +246,9 @@ export class QueueWorker extends WorkerHost {
       await fs.promises.unlink(filePath);
       this.logger.log(`File deleted: ${filePath}`);
     } catch (error: any) {
-      this.logger.error(`Error deleting file ${filePath}:`, error.message);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error deleting file ${filePath}: ${errorMessage}`);
     }
   }
 }
