@@ -55,39 +55,28 @@ export class QueueWorker extends WorkerHost {
         );
       }
 
-      for (let rowNumber = 2; rowNumber < maxRowNumber; rowNumber++) {
-        const rowIndex = rowNumber - 1;
+      const updatedMaxRowNumber = await this.readFileRowByRow(
+        worksheet,
+        (rowJson: ReservationDto, rowNumber: number) =>
+          this.validateRow(taskId, rowJson, rowNumber, reservationIds),
+        { maxRowNumber, header },
+      );
 
-        const rowJson = this.readJsonRow<ReservationDto>(
-          worksheet,
-          rowIndex,
-          header,
-        );
-
-        if (this.isRowEmpty(rowJson)) {
-          maxRowNumber = rowNumber;
-          break;
-        }
-
-        await this.validateRow(taskId, rowJson, rowNumber, reservationIds);
+      if (updatedMaxRowNumber) {
+        maxRowNumber = updatedMaxRowNumber;
       }
 
       if (await this.hadErrors(taskId)) {
         throw new Error(`Task ${taskId} failed, due to validation errors.`);
       }
 
-      for (let rowNumber = 2; rowNumber < maxRowNumber; rowNumber++) {
-        // separate loop for memory optimization
-        const rowIndex = rowNumber - 1;
-
-        const rowJson = this.readJsonRow<ReservationDto>(
-          worksheet,
-          rowIndex,
-          header,
-        );
-
-        await this.reservationService.processReservation(rowJson);
-      }
+      // separate loop for memory optimization
+      await this.readFileRowByRow(
+        worksheet,
+        (rowJson: ReservationDto) =>
+          this.reservationService.processReservation(rowJson),
+        { maxRowNumber, header },
+      );
 
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
@@ -99,6 +88,24 @@ export class QueueWorker extends WorkerHost {
         failReason: errorMessage,
       });
       this.logger.error(`Error while processing task ${taskId}:`, errorMessage);
+    }
+  }
+
+  async readFileRowByRow<T extends Record<string, any>>(
+    worksheet: xlsx.WorkSheet,
+    callback: (rowJson: T, rowNumber?: number) => Promise<void>,
+    { maxRowNumber, header }: { maxRowNumber: number; header: (keyof T)[] },
+  ) {
+    for (let rowNumber = 2; rowNumber < maxRowNumber; rowNumber++) {
+      const rowIndex = rowNumber - 1;
+
+      const rowJson = this.readJsonRow<T>(worksheet, rowIndex, header);
+
+      if (this.isRowEmpty(rowJson)) {
+        return rowNumber;
+      }
+
+      await callback(rowJson);
     }
   }
 
@@ -124,13 +131,13 @@ export class QueueWorker extends WorkerHost {
     return headers as (keyof ReservationDto)[];
   }
 
-  readJsonRow<T>(
+  readJsonRow<T extends Record<string, any>>(
     worksheet: xlsx.WorkSheet,
     rowIndex: number,
-    header: string[],
+    header: (keyof T)[],
   ): T {
     const rowValues = this.readRow(worksheet, rowIndex);
-    return mergeHeadersWithValues(header, rowValues) as T;
+    return mergeHeadersWithValues(header, rowValues);
   }
 
   async loadFirstWorksheet(filePath: string) {
