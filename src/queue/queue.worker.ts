@@ -51,13 +51,10 @@ export class QueueWorker extends WorkerHost {
         xlsx.utils.decode_range(worksheet['!ref'] || '').e.r ?? MAX_XLSX_ROWS;
 
       if (!maxRowNumber || maxRowNumber === 1) {
-        const failReason = `Task ${taskId} failed, xlsx file does not contain any data.`;
-        this.logger.log(failReason);
-        await this.tasksService.updateTask(taskId, {
-          status: 'FAILED',
-          failReason,
-          reportPath: this.tasksService.getReportPath(taskId),
-        });
+        await this.failTask(
+          taskId,
+          `Task ${taskId} failed, xlsx file does not contain any data.`,
+        );
         return;
       }
 
@@ -78,13 +75,10 @@ export class QueueWorker extends WorkerHost {
       );
 
       if (!validationSuccessful) {
-        const failReason = `Task ${taskId} failed, due to validation errors.`;
-        this.logger.log(failReason);
-        await this.tasksService.updateTask(taskId, {
-          status: 'FAILED',
-          failReason,
-          reportPath: this.tasksService.getReportPath(taskId),
-        });
+        await this.failTask(
+          taskId,
+          `Task ${taskId} failed, due to validation errors.`,
+        );
         return;
       }
 
@@ -130,7 +124,7 @@ export class QueueWorker extends WorkerHost {
         return rowNumber;
       }
 
-      await callback(rowJson);
+      await callback(rowJson, rowNumber);
     }
   }
 
@@ -217,7 +211,7 @@ export class QueueWorker extends WorkerHost {
         reservationIds.add(reservation[uniqueFieldName]);
       }
 
-      if (errorsContent) {
+      if (errorsContent.length) {
         await this.tasksService.saveErrorToReport(
           taskId,
           errorsContent.join('\n'),
@@ -250,5 +244,14 @@ export class QueueWorker extends WorkerHost {
         error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(`Error deleting file ${filePath}: ${errorMessage}`);
     }
+  }
+
+  async failTask(taskId: string, failReason: string) {
+    this.logger.warn(failReason);
+    await this.tasksService.updateTask(taskId, {
+      status: 'FAILED',
+      failReason,
+      reportPath: this.tasksService.getReportPath(taskId),
+    });
   }
 }

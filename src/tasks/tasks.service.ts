@@ -84,12 +84,6 @@ export class TasksService {
         await fs.promises.access(reportsDir);
       } catch {
         await fs.promises.mkdir(reportsDir, { recursive: true });
-        await fs.promises.writeFile(
-          filePath,
-          'TASK PROCESSING ERROR SUMMARY\n',
-          'utf-8',
-        );
-        this.logger.log(`Report created: ${filePath}`);
       }
 
       await fs.promises.appendFile(filePath, `${errorContent}\n`, 'utf-8');

@@ -62,7 +62,7 @@ export class ReservationDto {
   @Transform(({ value }: { value: unknown }): ReservationStatus => {
     if (typeof value !== 'string') {
       throw new Error(
-        `Invalid status type: expected string, got ${typeof value}. status should be one of the following valid reservation statuses: ${Object.keys(ReservationStatusEnum).join(', ')}.`,
+        `Invalid status: status should be one of the following valid reservation statuses: ${Object.keys(ReservationStatusEnum).join(', ')}.`,
       );
     }
     const trimmedValue = value.trim() as PolishReservationStatus;
