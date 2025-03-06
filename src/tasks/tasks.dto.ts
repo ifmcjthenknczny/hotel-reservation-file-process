@@ -13,7 +13,7 @@ import {
   FileExtensionValidator,
   FileSizeValidator,
   FileTypeValidator,
-} from 'src/helpers/validation';
+} from '~/helpers/decorators';
 import { ApiProperty } from '@nestjs/swagger';
 
 export const EXAMPLE_UUID = '550e8400-e29b-41d4-a716-446655440000';

@@ -13,15 +13,13 @@ import {
   RESERVATION_PROPERTIES,
   ReservationDto,
 } from 'src/reservation/reservation.dto';
-import { chunkify, findDuplicateValueIndexes } from 'src/helpers/array';
 import { Logger } from 'nestjs-pino';
 import {
   formatReportDuplicationReportMessage,
   formatReportValidationErrorMessage,
-} from 'src/helpers/validation';
+} from '~/helpers/validation';
 import { areSetsEqual, mergeHeadersWithValues } from '~/helpers/object';
 
-const DB_PROCESS_BATCH_SIZE = 10;
 const XLSX_COLUMN_RANGE = RESERVATION_PROPERTIES.length;
 const MAX_XLSX_ROWS = 1_048_576;
 
@@ -46,15 +44,14 @@ export class QueueWorker extends WorkerHost {
       const worksheet = await this.loadFirstWorksheet(filePath);
 
       const header = this.readHeaderArray(worksheet);
-      const validatedJsonRows: ReservationDto[] = [];
-      const errors: string[] = [];
+      const reservationIds: Set<ReservationDto['reservation_id']> = new Set();
 
-      const maxRowNumber =
+      let maxRowNumber =
         xlsx.utils.decode_range(worksheet['!ref'] || '').e.r ?? MAX_XLSX_ROWS;
 
       if (!maxRowNumber || maxRowNumber === 1) {
         throw new Error(
-          'The xlsx file that is being processed does not have any data.',
+          'The xlsx file that is being processed does not contain any data.',
         );
       }
 
@@ -67,42 +64,30 @@ export class QueueWorker extends WorkerHost {
           header,
         );
 
-        if (
-          Object.values(rowJson).every(
-            (rowValue) => rowValue === null || rowValue === undefined,
-          )
-        ) {
+        if (this.isRowEmpty(rowJson)) {
+          maxRowNumber = rowNumber;
           break;
         }
 
-        await this.validateRow(rowJson, rowNumber, errors, validatedJsonRows);
+        await this.validateRow(taskId, rowJson, rowNumber, reservationIds);
       }
 
-      if (validatedJsonRows.length) {
-        // only checked when there are no validation errors before
-        const uniqueFieldName: keyof ReservationDto = 'reservation_id';
-        const duplicates = findDuplicateValueIndexes(
-          validatedJsonRows.map((row) => row[uniqueFieldName]),
+      if (await this.hadErrors(taskId)) {
+        throw new Error(`Task ${taskId} failed, due to validation errors.`);
+      }
+
+      for (let rowNumber = 2; rowNumber < maxRowNumber; rowNumber++) {
+        // separate loop for memory optimization
+        const rowIndex = rowNumber - 1;
+
+        const rowJson = this.readJsonRow<ReservationDto>(
+          worksheet,
+          rowIndex,
+          header,
         );
-        if (Object.keys(duplicates).length) {
-          const duplicationErrors = Object.keys(duplicates).map(
-            (duplicatedValue) =>
-              formatReportDuplicationReportMessage(
-                duplicatedValue,
-                duplicates[duplicatedValue],
-                uniqueFieldName,
-              ),
-          );
-          errors.push(...duplicationErrors);
-        }
-      }
 
-      if (errors.length) {
-        await this.saveValidationErrorReport(taskId, errors);
-        return;
+        await this.reservationService.processReservation(rowJson);
       }
-
-      await this.saveReservationToDb(validatedJsonRows);
 
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
       this.logger.log(`Task ${taskId} completed.`);
@@ -157,17 +142,26 @@ export class QueueWorker extends WorkerHost {
   }
 
   async validateRow(
+    taskId: string,
     rowContent: ReservationDto,
     rowNumber: number,
-    errors: string[],
-    validatedJsonRows: ReservationDto[],
+    reservationIds: Set<ReservationDto['reservation_id']>,
   ) {
     try {
       const reservation = plainToInstance(ReservationDto, rowContent);
       const validationErrors = await validate(reservation);
+      const uniqueFieldName: keyof ReservationDto = 'reservation_id';
+      const errorsContent: string[] = [];
 
       if (validationErrors.length) {
-        errors.push(
+        const errors = validationErrors.map((error) =>
+          formatReportValidationErrorMessage(
+            Object.values(error.constraints || {}).join(', ') ||
+              `Unidentified problem with column ${error.property}`,
+            rowNumber,
+          ),
+        );
+        errorsContent.push(
           ...validationErrors.map((error) =>
             formatReportValidationErrorMessage(
               Object.values(error.constraints || {}).join(', ') ||
@@ -176,42 +170,50 @@ export class QueueWorker extends WorkerHost {
             ),
           ),
         );
+        await this.tasksService.saveErrorToReport(taskId, errors.join('\n'));
       }
 
-      if (!errors.length) {
-        // push rows only if there is a possibility to return them in the future
-        validatedJsonRows.push(reservation);
+      if (reservationIds.has(reservation[uniqueFieldName])) {
+        errorsContent.push(
+          formatReportDuplicationReportMessage(
+            reservation[uniqueFieldName],
+            uniqueFieldName,
+            rowNumber,
+          ),
+        );
       } else {
-        validatedJsonRows = [];
+        reservationIds.add(reservation[uniqueFieldName]);
+      }
+
+      if (errorsContent) {
+        await this.tasksService.saveErrorToReport(
+          taskId,
+          errorsContent.join('\n'),
+        );
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unidentified error';
-      errors.push(formatReportValidationErrorMessage(errorMessage, rowNumber));
+      await this.tasksService.saveErrorToReport(
+        taskId,
+        formatReportValidationErrorMessage(errorMessage, rowNumber),
+      );
     }
   }
 
-  async saveValidationErrorReport(taskId: string, errors: string[]) {
-    const reportPath = await this.tasksService.saveErrorReport(taskId, errors);
-    await this.tasksService.updateTask(taskId, {
-      status: 'FAILED',
-      reportPath,
-    });
-    this.logger.error(
-      `Validation errors occurred while processing task ${taskId}`,
+  isRowEmpty<T extends Record<string, any>>(rowJson: T) {
+    return Object.values(rowJson).every(
+      (rowValue) => rowValue === null || rowValue === undefined,
     );
   }
 
-  async saveReservationToDb(validatedJsonRows: ReservationDto[]) {
-    const dbJobsChunks = chunkify(
-      validatedJsonRows.map((reservation) =>
-        this.reservationService.processReservation(reservation),
-      ),
-      DB_PROCESS_BATCH_SIZE,
-    );
-
-    for (const chunk of dbJobsChunks) {
-      await Promise.all(chunk);
+  async hadErrors(taskId: string) {
+    try {
+      const filePath = this.tasksService.getReportPath(taskId);
+      await fs.promises.access(filePath);
+      return true;
+    } catch {
+      return false;
     }
   }
 }

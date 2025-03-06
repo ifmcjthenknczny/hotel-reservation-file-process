@@ -132,7 +132,7 @@ Add the API key to your request headers like this:
 
 - **Validation:** Reservations are only added if file in whole pass validation. Invalid records are logged, and a report is generated.
 
-- **Batch Upsert:** Reservations are processed into the database in batches, ensuring reduced database load.
+- **Single Upsert:** Reservations are processed into the database one by one, ensuring reduced database and memory load, which is priority.
 
 - **Upsert Logic:** App processes validated reservation data according to the following rules:
   If the reservation has a status of "CANCELED" or "COMPLETED":
@@ -150,7 +150,11 @@ Add the API key to your request headers like this:
 
 - **Date Validation:** There is no restriction on the reservation date being in the past due to simplifications for testing purposes.
 
+- **Data Processing:** Only reservations from fully validated files are stored in the database. Files containing validation errors are logged in a report and excluded from database insertion.
+
 - **Data Storage:** For simplification, error reports and uploaded XLSX files are stored locally, inside the container, under `data/reports` and `data/reservations` directories respectively. In production, they should be stored on some bucket, to avoid overflowing the Docker container's storage.
+
+- **Memory Optimization:** The app is optimized for memory efficiency rather than performance. Since streaming the XLSX file is not possible and whole worksheet must be kept in memory, the implementation at least minimizes memory usage and the amount of data stored in variables during processing, including second loop for upserting validated data in database.
 
 ## Author
 

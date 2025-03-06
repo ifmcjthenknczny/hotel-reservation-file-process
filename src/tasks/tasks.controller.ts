@@ -24,7 +24,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TASK_STATUSES } from './tasks.schema';
-import { Protected } from '~/helpers/validation';
+import { Protected } from '~/helpers/decorators';
 
 @Controller('tasks')
 @ApiTags('Tasks')

@@ -1,4 +1,4 @@
-import { Day, DAY_REGEX } from 'src/helpers/validation';
+import { Day, DAY_REGEX } from '~/helpers/decorators';
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { ReservationDto } from './reservation.dto';
 import { Document } from 'mongoose';

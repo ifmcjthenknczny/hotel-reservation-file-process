@@ -69,7 +69,13 @@ export class TasksService {
     return taskId;
   }
 
-  async saveErrorReport(taskId: string, validationErrors: string[]) {
+  getReportPath(taskId: string) {
+    const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
+    const filePath = path.join(reportsDir, `${taskId}.txt`);
+    return filePath;
+  }
+
+  async saveErrorToReport(taskId: string, errorContent: string) {
     try {
       const reportsDir = path.join(process.cwd(), VALIDATION_REPORTS_DIRECTORY);
       const filePath = path.join(reportsDir, `${taskId}.txt`);
@@ -78,16 +84,19 @@ export class TasksService {
         await fs.promises.access(reportsDir);
       } catch {
         await fs.promises.mkdir(reportsDir, { recursive: true });
+        await fs.promises.writeFile(
+          filePath,
+          'VALIDATION ERRORS SUMMARY\n',
+          'utf-8',
+        );
+        this.logger.log(`Report created: ${filePath}`);
       }
 
-      const content = ['VALIDATION ERRORS SUMMARY', ...validationErrors].join(
-        '\n',
-      );
-      await fs.promises.writeFile(filePath, content, 'utf-8');
-      this.logger.log(`Report saved: ${filePath}`);
+      await fs.promises.appendFile(filePath, `${errorContent}\n`, 'utf-8');
+
       return filePath;
     } catch (error: any) {
-      this.logger.error(`Error saving report for ${taskId}:`, error);
+      this.logger.error(`Error saving to report file for ${taskId}:`, error);
     }
   }
 }

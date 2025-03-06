@@ -5,7 +5,7 @@ import {
   ReservationStatus,
   ReservationStatusEnum,
 } from 'src/reservation/reservation.schema';
-import { Day, DAY_REGEX, IsAfter, Trim } from 'src/helpers/validation';
+import { Day, DAY_REGEX, IsAfter, Trim } from '~/helpers/decorators';
 import { ApiProperty } from '@nestjs/swagger';
 
 // TODO: create property decorator instead
