@@ -36,6 +36,7 @@ export class QueueWorker extends WorkerHost {
 
   async process(job: Job<Task>): Promise<void> {
     const { filePath, taskId } = job.data;
+    let validationSuccessful = true;
 
     try {
       this.logger.log(`Processing file: ${filePath}`);
@@ -50,24 +51,43 @@ export class QueueWorker extends WorkerHost {
         xlsx.utils.decode_range(worksheet['!ref'] || '').e.r ?? MAX_XLSX_ROWS;
 
       if (!maxRowNumber || maxRowNumber === 1) {
-        throw new Error(
-          'The xlsx file that is being processed does not contain any data.',
-        );
+        const failReason = `Task ${taskId} failed, xlsx file does not contain any data.`;
+        this.logger.log(failReason);
+        await this.tasksService.updateTask(taskId, {
+          status: 'FAILED',
+          failReason,
+        });
+        return;
       }
 
       const updatedMaxRowNumber = await this.readFileRowByRow(
         worksheet,
-        (rowJson: ReservationDto, rowNumber: number) =>
-          this.validateRow(taskId, rowJson, rowNumber, reservationIds),
+        async (rowJson: ReservationDto, rowNumber: number) => {
+          const isValid = await this.validateRow(
+            taskId,
+            rowJson,
+            rowNumber,
+            reservationIds,
+          );
+          if (!isValid) {
+            validationSuccessful = false;
+          }
+        },
         { maxRowNumber, header },
       );
 
-      if (updatedMaxRowNumber) {
-        maxRowNumber = updatedMaxRowNumber;
+      if (!validationSuccessful) {
+        const failReason = `Task ${taskId} failed, due to validation errors.`;
+        this.logger.log(failReason);
+        await this.tasksService.updateTask(taskId, {
+          status: 'FAILED',
+          failReason,
+        });
+        return;
       }
 
-      if (await this.hadErrors(taskId)) {
-        throw new Error(`Task ${taskId} failed, due to validation errors.`);
+      if (updatedMaxRowNumber) {
+        maxRowNumber = updatedMaxRowNumber;
       }
 
       // separate loop for memory optimization
@@ -79,7 +99,7 @@ export class QueueWorker extends WorkerHost {
       );
 
       await this.tasksService.updateTask(taskId, { status: 'COMPLETED' });
-      this.logger.log(`Task ${taskId} completed.`);
+      this.logger.log(`Task ${taskId} successfully completed.`);
     } catch (error: any) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -88,6 +108,8 @@ export class QueueWorker extends WorkerHost {
         failReason: errorMessage,
       });
       this.logger.error(`Error while processing task ${taskId}:`, errorMessage);
+    } finally {
+      await this.deleteFile(filePath);
     }
   }
 
@@ -197,7 +219,9 @@ export class QueueWorker extends WorkerHost {
           taskId,
           errorsContent.join('\n'),
         );
+        return true;
       }
+      return false;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unidentified error';
@@ -214,13 +238,12 @@ export class QueueWorker extends WorkerHost {
     );
   }
 
-  async hadErrors(taskId: string) {
+  async deleteFile(filePath: string) {
     try {
-      const filePath = this.tasksService.getReportPath(taskId);
-      await fs.promises.access(filePath);
-      return true;
-    } catch {
-      return false;
+      await fs.promises.unlink(filePath);
+      this.logger.log(`File deleted: ${filePath}`);
+    } catch (error: any) {
+      this.logger.error(`Error deleting file ${filePath}:`, error.message);
     }
   }
 }

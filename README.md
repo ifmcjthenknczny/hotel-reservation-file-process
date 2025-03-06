@@ -144,6 +144,8 @@ Add the API key to your request headers like this:
 
 - **Error Report:** If errors are encountered during file processing, a .txt report is generated. It contains row number of validation error occurence, type of error and suggestion for file improvement. It can be downloaded from the endpoint `/tasks/report/:taskId`.
 
+- **Reservation file deletion:** Finally, regardless of task processing result, the reservation file is deleted to free up storage space.
+
 ## Notes
 
 - **Reservation ID:** The reservation_id can be any string. It's not parsed as a number to keep it flexible.
@@ -152,7 +154,7 @@ Add the API key to your request headers like this:
 
 - **Data Processing:** Only reservations from fully validated files are stored in the database. Files containing validation errors are logged in a report and excluded from database insertion.
 
-- **Data Storage:** For simplification, error reports and uploaded XLSX files are stored locally, inside the container, under `data/reports` and `data/reservations` directories respectively. In production, they should be stored on some bucket, to avoid overflowing the Docker container's storage.
+- **Data Storage:** For simplification, error reports and uploaded XLSX files are stored locally, inside the container, under `data/reports` and `data/reservations` directories respectively. In production, they should be stored on some bucket, to avoid possiblity of overflowing the Docker container's storage.
 
 - **Memory Optimization:** The app is optimized for memory efficiency rather than performance. Since streaming the XLSX file is not possible and whole worksheet must be kept in memory, the implementation at least minimizes memory usage and the amount of data stored in variables during processing, including second loop for upserting validated data in database.
 

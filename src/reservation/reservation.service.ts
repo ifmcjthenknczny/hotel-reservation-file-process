@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { plainToInstance } from 'class-transformer';
 import { Model } from 'mongoose';
 import { ReservationDto } from 'src/reservation/reservation.dto';
 import {
@@ -15,7 +16,9 @@ export class ReservationService {
   ) {}
 
   async processReservation(reservation: ReservationDto): Promise<void> {
-    const { reservationId, status, ...data } = toDbReservation(reservation);
+    const mappedReservation = plainToInstance(ReservationDto, reservation);
+    const { reservationId, status, ...data } =
+      toDbReservation(mappedReservation);
 
     const existingReservation = await this.findReservation(reservationId);
     const isActiveStatus = !['CANCELED', 'COMPLETED'].includes(status);
