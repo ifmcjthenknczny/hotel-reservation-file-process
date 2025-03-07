@@ -18,7 +18,11 @@ import {
   formatReportDuplicationReportMessage,
   formatReportValidationErrorMessage,
 } from '~/helpers/validation';
-import { areSetsEqual, mergeHeadersWithValues } from '~/helpers/object';
+import {
+  areSetsEqual,
+  isRowEmpty,
+  mergeHeadersWithValues,
+} from '~/helpers/object';
 
 const XLSX_COLUMN_RANGE = RESERVATION_PROPERTIES.length;
 const MAX_XLSX_ROWS = 1_048_576;
@@ -121,7 +125,7 @@ export class QueueWorker extends WorkerHost {
 
       const rowJson = this.readJsonRow<T>(worksheet, rowIndex, header);
 
-      if (this.isRowEmpty(rowJson)) {
+      if (isRowEmpty(rowJson)) {
         return rowNumber;
       }
 
@@ -229,12 +233,6 @@ export class QueueWorker extends WorkerHost {
       );
       return false;
     }
-  }
-
-  isRowEmpty<T extends Record<string, any>>(rowJson: T) {
-    return Object.values(rowJson).every(
-      (rowValue) => rowValue === null || rowValue === undefined,
-    );
   }
 
   async deleteFile(filePath: string) {

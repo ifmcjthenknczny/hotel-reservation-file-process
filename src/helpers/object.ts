@@ -19,3 +19,9 @@ export const areSetsEqual = <T>(setA: Set<T>, setB: Set<T>): boolean => {
   }
   return true;
 };
+
+export const isRowEmpty = <T extends Record<string, any>>(rowJson: T) => {
+  return Object.values(rowJson).every(
+    (rowValue) => rowValue === null || rowValue === undefined,
+  );
+};
