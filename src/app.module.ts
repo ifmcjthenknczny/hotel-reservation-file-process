@@ -8,6 +8,7 @@ import { QueueModule } from './queue/queue.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { validateConfig } from './app.config';
 import { LoggerModule } from 'nestjs-pino';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { LoggerModule } from 'nestjs-pino';
     TasksModule,
     QueueModule,
     ReservationModule,
+    WebsocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

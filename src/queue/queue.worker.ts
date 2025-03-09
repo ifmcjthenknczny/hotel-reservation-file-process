@@ -91,7 +91,7 @@ export class QueueWorker extends WorkerHost {
         maxRowNumber = updatedMaxRowNumber;
       }
 
-      // separate loop for memory optimization
+      // separate loop for memory optimization, when file is succesfully validated
       await this.readFileRowByRow(
         worksheet,
         (rowJson: ReservationDto) =>
@@ -104,11 +104,7 @@ export class QueueWorker extends WorkerHost {
     } catch (error: any) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      await this.tasksService.updateTask(taskId, {
-        status: 'FAILED',
-        failReason: errorMessage,
-        reportPath: this.tasksService.getReportPath(taskId),
-      });
+      await this.failTask(taskId, errorMessage);
       this.logger.error(`Error while processing task ${taskId}:`, errorMessage);
     } finally {
       await this.deleteFile(filePath);

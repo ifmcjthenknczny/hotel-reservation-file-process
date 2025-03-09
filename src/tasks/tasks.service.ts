@@ -8,6 +8,7 @@ import * as path from 'path';
 import { QueueService } from 'src/queue/queue.service';
 import { Logger } from 'nestjs-pino';
 import { TaskDto } from './tasks.dto';
+import { WebsocketGateway } from '~/websocket/websocket.gateway';
 
 const RESERVATIONS_DATA_DIRECTORY = 'data/reservations';
 const VALIDATION_REPORTS_DIRECTORY = 'data/reports';
@@ -18,6 +19,7 @@ export class TasksService {
     @InjectModel('Task') private readonly taskModel: Model<Task>,
     private readonly queueService: QueueService,
     private readonly logger: Logger,
+    private readonly websocket: WebsocketGateway,
   ) {}
   async createTask(file: Express.Multer.File) {
     const taskId: string = uuidv4();
@@ -36,6 +38,10 @@ export class TasksService {
       filePath,
       status: 'PENDING',
       createdAt: new Date(),
+    });
+    this.websocket.sendTaskUpdate({
+      taskId,
+      status: 'PENDING',
     });
 
     await task.save();
@@ -66,6 +72,13 @@ export class TasksService {
         ...((status || reportPath || failReason) && { updatedAt: new Date() }),
       },
     );
+    if (status) {
+      this.websocket.sendTaskUpdate({
+        taskId,
+        status,
+        ...(failReason && { message: failReason }),
+      });
+    }
     return taskId;
   }
 

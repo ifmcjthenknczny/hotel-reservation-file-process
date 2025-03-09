@@ -25,6 +25,8 @@ This project is a backend application built with NestJS, designed to process hot
 
 - **Memory effective XLSX file reading:** Unfortunatelly, streaming XLSX file is [impossible](https://docs.sheetjs.com/docs/solutions/input/#example-readable-streams). Data handling was conducted by reading the entire file into a buffer and then parsing it using `xlsx.read`, extracting first worksheet and processing rows and cells in a row one by one until it finds first empty row or reaches EOF. 
 
+- **Real-time Task Updates via WebSockets:** Get instant updates on task statuses through a WebSocket connection.
+
 ## Setup and Installation
 
 1. Make sure you have already:
@@ -120,6 +122,26 @@ Add the API key to your request headers like this:
 
 ```x-api-key: smarthotel```
 </details>
+
+### WebSocket
+
+The backend supports real-time queue task status updates via WebSocket, available at `ws://localhost:3000`.
+
+The server emits task updates on the `tasks` event. The payload follows this structure:
+```json
+{
+  "taskId": "12345",
+  "status": "IN_PROGRESS",
+  "message": "Processing started",
+  "eventAt": "2025-03-10T12:00:00.000Z"
+}
+```
+
+To connect to a Websocket using Postman:
+1. Open Postman → Click **New Request** → Select **Socket.IO Request**.
+2. **Enter the URL**: `ws://localhost:3000`. In **Events** tab enter `tasks` event to track and set the checkbox to enable listening. Click **Connect**.
+3. Incoming messages will appear in **Response** subwindow.
+4. Click **Disconnect** when finished.
 
 ## Task Processing Logic
 
