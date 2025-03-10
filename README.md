@@ -9,6 +9,7 @@ This project is a backend application built with NestJS, designed to process hot
   + [Swagger](#swagger)
   + [Endpoints overview](#endpoints-overview)
   + [API Key Authentication](#api-key-authentication)
+  + [WebSocket](#websocket)
 * [Task Processing Logic](#task-processing-logic)
 * [Notes](#notes)
 * [Author](#author)
@@ -125,7 +126,7 @@ Add the API key to your request headers like this:
 
 ### WebSocket
 
-The backend supports real-time queue task status updates via WebSocket, available at `ws://localhost:3000`.
+The backend supports real-time queue task status updates via WebSockets, it leverages Socket.IO rather than a raw WebSocket implementation for enhanced features like event-based messaging, multiplatform fallback mechanisms, and automatic reconnections. It is available at `ws://localhost:3000`.
 
 The server emits task updates on the `tasks` event. The payload follows this structure:
 ```json
