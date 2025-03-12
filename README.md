@@ -5,6 +5,7 @@ This project is a backend application built with NestJS, designed to process hot
 ## Table of contents
 * [Features](#features)
 * [Setup and Installation](#setup-and-installation)
+  + [Environment Variables](#environment-variables)
 * [API](#api)
   + [Swagger](#swagger)
   + [Endpoints overview](#endpoints-overview)
@@ -41,13 +42,24 @@ cd hotel-reservation-file-process
 ```
 
 3. Build and Start the Containers:
-Run the following command to start the application with required infractructure (MongoDB and Redis) locally in Docker containers:
+Run the following command in `hotel-reservation-file-process` directory to start the application with required infractructure (MongoDB and Redis) locally in Docker containers:
 
 ```bash
 docker-compose up --build -d
 ```
 
 This will build the project and run it in detached mode. The app will be available at `http://localhost:3000`.
+
+### Environment Variables
+The default local environment variables are set in Docker. If needed, you can override them by modifying the .env file using this template:
+
+```
+API_KEY=secret
+MONGO_URI=mongodb://admin:secret@mongodb:27017/mydatabase?authSource=admin
+REDIS_URI=redis://default:mysecretpassword@redis:6379
+```
+
+Ensure these values match your development setup before running the application.
 
 ## API
 
