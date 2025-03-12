@@ -54,7 +54,7 @@ This will build the project and run it in detached mode. The app will be availab
 The default local environment variables are set in Docker. If needed, you can override them by modifying the .env file using this template:
 
 ```
-API_KEY=secret
+API_KEY=smarthotel
 MONGO_URI=mongodb://admin:secret@mongodb:27017/mydatabase?authSource=admin
 REDIS_URI=redis://default:mysecretpassword@redis:6379
 ```
