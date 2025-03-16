@@ -32,7 +32,7 @@ This project is a backend application built with NestJS, designed to process hot
 ## Setup and Installation
 
 1. Make sure you have already:
-- Docker and Docker Compose installed on your machine.
+- Docker and Docker Compose installed on your machine and running.
 - Yarn installed on your machine.
 
 2. Clone the Repository:
